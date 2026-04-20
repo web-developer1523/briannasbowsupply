@@ -1,0 +1,1491 @@
+<!-- /templates/product.liquid -->
+<div itemscope itemtype="http://schema.org/Product" id="ProductSection" data-section-id="{{ section.id }}" data-section-type="product-template" data-image-zoom-type="{{ section.settings.product_image_zoom_type }}" data-show-extra-tab="{{ section.settings.show_extra_tab }}" data-extra-tab-content="{{ section.settings.extra_tab_content }}" data-cart-enable-ajax="{{ settings.cart_enable_ajax }}" data-enable-history-state="true">
+
+    <meta itemprop="name" content="{{ product.title }}">
+    <meta itemprop="url" content="{{ shop.url }}{{ product.url }}">
+    <meta itemprop="image" content="{{ product.featured_image.src | img_url: 'grande' }}">
+  
+    {% comment %}
+      Get first variant in stock, or deep linked one
+    {% endcomment %}
+    {% assign current_variant = product.selected_or_first_available_variant %}
+  
+    <div class="grid product-single">
+  
+      <div class="grid__item medium-up--one-half">
+        <div class="custom-preview product-preview-media card">
+          {% comment %} <h2 class="heading">Preview</h2> {% endcomment %}
+          <div class="preview-frame">
+            <div class="preview-corner">IN</div>
+            <canvas id="previewRulerTop-{{ section.id }}" class="preview-ruler preview-ruler--top" width="700" height="34"></canvas>
+            <canvas id="previewRulerLeft-{{ section.id }}" class="preview-ruler preview-ruler--left" width="34" height="500"></canvas>
+            <div class="preview-wrap">
+              <canvas id="previewCanvas-{{ section.id }}" width="700" height="500"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <div class="grid__item medium-up--one-half{% if product.images.size == 0%} medium-up--push-one-half{% endif %}">
+        <div class="product-single__meta small--text-center">
+          <h1 class="product-single__title" itemprop="name">{{ product.title }}</h1>
+  
+          {% if section.settings.vendor_show %}
+            <p class="product-single__vendor" itemprop="brand">{{ product.vendor }}</p>
+          {% endif %}
+  
+          <div itemprop="offers" itemscope itemtype="http://schema.org/Offer">
+            <meta itemprop="priceCurrency" content="{{ shop.currency }}">
+  
+            <link itemprop="availability" href="http://schema.org/{% if current_variant.available %}InStock{% else %}OutOfStock{% endif %}">
+  
+            <p class="product-single__prices">
+              {% if product.compare_at_price_max > product.price %}
+                <span id="ComparePriceA11y" class="visually-hidden">{{ 'products.product.sale_price' | t }}</span>
+              {% else %}
+                <span class="visually-hidden">{{ 'products.product.regular_price' | t }}</span>
+              {% endif %}
+              <span id="ProductPrice" class="product-single__price" itemprop="price" content="{{ current_variant.price | divided_by: 100.00 }}">
+                {{ current_variant.price | money }}
+              </span>
+  
+              {% if product.compare_at_price_max > product.price %}
+                <span id="PriceA11y" class="visually-hidden">{{ 'products.product.regular_price' | t }}</span>
+                <s class="product-single__price--compare" id="ComparePrice">
+                  {{ current_variant.compare_at_price | money }}
+                </s>
+              {% endif %}
+            </p>
+  
+            {%- if shop.taxes_included or shop.shipping_policy.body != blank -%}
+              <div class="product-single__policies rte">
+                {%- if shop.taxes_included -%}
+                  {{ 'products.product.include_taxes' | t }}
+                {%- endif -%}
+                {%- if shop.shipping_policy.body != blank -%}
+                  {{ 'products.product.shipping_policy_html' | t: link: shop.shipping_policy.url }}
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+  
+            {% form 'product', product, class:'product-form' %}
+              <select name="id" id="ProductSelect-{{ section.id }}" class="product-single__variants">
+                {% for variant in product.variants %}
+                  {% if variant.available %}
+                    <option {% if variant == product.selected_or_first_available_variant %} selected="selected" {% endif %} data-sku="{{ variant.sku }}" value="{{ variant.id }}">{{ variant.title }} - {{ variant.price | money_with_currency }}</option>
+                  {% else %}
+                    <option disabled="disabled">
+                      {{ variant.title }} - {{ 'products.product.sold_out' | t }}
+                    </option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            
+  <div id="uploadery-container"></div>
+  
+              <div class="image-source-controls">
+                {% comment %} <div class="image-source-options">
+                  <label><input type="radio" name="imageSource-{{ section.id }}" value="upload" checked> Upload my image</label>
+                  <label><input type="radio" name="imageSource-{{ section.id }}" value="template"> Choose template</label>
+                </div> {% endcomment %}
+                <button type="button" id="OpenTemplatePicker-{{ section.id }}" class="btn image-source-button">Open template library</button>
+                <input type="hidden" id="ImageSource-{{ section.id }}" name="properties[Image_Source]" value="Uploaded image">
+                <input type="hidden" id="TemplateImage-{{ section.id }}" name="properties[Template_Image]" value="">
+              </div>
+  
+              <div class="custom-controls card">
+                {% comment %} <h2 class="heading">Controls</h2> {% endcomment %}
+                <div class="controls">
+                  <input type="hidden" name="properties[Canvas_Size]" id="CanvasSize-{{ section.id }}" value="3x3">
+                  <input type="hidden" name="properties[Canvas_Scale]" id="CanvasScale-{{ section.id }}" value="100%">
+  
+                  <div class="scale-control">
+                    <label class="scale-control__label" for="scaleSlider-{{ section.id }}">
+                      Adjust Scale:
+                      <span class="scale-control__value" id="scaleValue-{{ section.id }}">3.00 X 3.00in</span>
+                    </label>
+                    <input class="scale-control__slider" id="scaleSlider-{{ section.id }}" type="range" min="0.1" max="4" step="0.01" value="1">
+                  </div>
+  
+                  <div class="row">
+                    <span>Size</span>
+                    <div class="size-options" id="sizeOptions-{{ section.id }}">
+                      <label><input type="radio" name="canvasSize-{{ section.id }}" value="3x3" checked> 3x3</label>
+                      <label><input type="radio" name="canvasSize-{{ section.id }}" value="4x4"> 4x4</label>
+                      <label><input type="radio" name="canvasSize-{{ section.id }}" value="5x5"> 5x5</label>
+                      <label><input type="radio" name="canvasSize-{{ section.id }}" value="6x6"> 6x6</label>
+                      <label><input type="radio" name="canvasSize-{{ section.id }}" value="7x7"> 7x7</label>
+                      <label><input type="radio" name="canvasSize-{{ section.id }}" value="8x8"> 8x8</label>
+                      <label><input type="radio" name="canvasSize-{{ section.id }}" value="10x10"> 10x10</label>
+                      <label><input type="radio" name="canvasSize-{{ section.id }}" value="12x12"> 12x12</label>
+                    </div>
+                    {% comment %} <span class="value" id="sizeValue-{{ section.id }}">3"</span> {% endcomment %}
+                  </div>
+  
+                  <div class="row">
+                    <label for="widthInput-{{ section.id }}">Image Width</label>
+                    <input id="widthInput-{{ section.id }}" type="number" min="1" value="0">
+                    {% comment %} <span class="value">in</span> {% endcomment %}
+                  </div>
+  
+                  <div class="row">
+                    <label for="heightInput-{{ section.id }}">Image Height</label>
+                    <input id="heightInput-{{ section.id }}" type="number" min="1" value="0">
+                    {% comment %} <span class="value">in</span> {% endcomment %}
+                  </div>
+                </div>
+                {% comment %} <p class="hint">
+                  Image is loaded from your uploaded file URL. Size changes canvas ratio, scale zooms the image, and low scale repeats the image.
+                </p> {% endcomment %}
+              </div>
+  
+              {% if section.settings.product_quantity_enable %}
+                <div class="product-single__quantity">
+                  <label for="Quantity">{{ 'products.product.quantity' | t }}</label>
+                  <input type="number" id="Quantity" name="quantity" value="1" min="1">
+                </div>
+              {% endif %}
+  
+              <div class="product-single__cart-submit-wrapper{% if section.settings.enable_payment_button %} product-single__shopify-payment-btn{% endif %}{% if section.settings.add_to_cart_width == 'full_width' %} product-form--full{% endif %}">
+                <button type="submit" name="add" id="AddToCart"class="btn product-single__cart-submit{% if section.settings.add_to_cart_width == 'full_width' %} btn--full{% endif %}{% if section.settings.enable_payment_button %} shopify-payment-btn btn--secondary{% endif %}">
+                  <span id="AddToCartText">{{ 'products.product.add_to_cart' | t }}</span>
+                </button>
+                {% if section.settings.enable_payment_button %}
+                  {{ form | payment_button }}
+                {% endif %}
+              </div>
+  
+            {% endform %}
+  
+            {% assign design_library_value = shop.metafields.custom.design_library.value %}
+            {% if design_library_value != blank %}
+              <script type="application/json" id="TemplateLibraryJson-{{ section.id }}">
+                [
+                  {% if design_library_value.url != blank %}
+                    {
+                      "url": {{ design_library_value.url | json }},
+                      "alt": {{ design_library_value.alt | default: design_library_value.filename | default: 'Template image' | json }}
+                    }
+                  {% else %}
+                    {% for template_file in design_library_value %}
+                      {
+                        "url": {% if template_file.url != blank %}{{ template_file.url | json }}{% elsif template_file.preview_image %}{{ template_file.preview_image | image_url: width: 1500 | json }}{% else %}""{% endif %},
+                        "alt": {{ template_file.alt | default: template_file.filename | default: 'Template image' | json }}
+                      }{% unless forloop.last %},{% endunless %}
+                    {% endfor %}
+                  {% endif %}
+                ]
+              </script>
+            {% endif %}
+  
+            <div class="template-modal hidden" id="TemplateModal-{{ section.id }}" aria-hidden="true">
+              <div class="template-modal__backdrop" data-close-template-modal></div>
+              <div class="template-modal__panel" role="dialog" aria-modal="true" aria-label="Template library">
+                <div class="template-modal__header">
+                  <h3 class="template-modal__title">Choose an image from the library</h3>
+                  <button type="button" class="template-modal__close" data-close-template-modal aria-label="Close">X</button>
+                </div>
+                <div class="template-modal__grid" id="TemplateGrid-{{ section.id }}"></div>
+                <p class="template-modal__empty hidden" id="TemplateEmpty-{{ section.id }}">No template images found.</p>
+              </div>
+            </div>
+  
+          </div>
+  
+          {% if section.settings.product_description_position == 'right' %}
+            {%- assign position = 'right' -%}
+            {% include 'product-description' %}
+          {% endif %}
+  
+          {% if section.settings.social_sharing_products %}
+            {% include 'social-sharing', share_title: product.title, share_permalink: product.url, share_image: product %}
+          {% endif %}
+        </div>
+      </div>
+  
+    </div>
+  
+    {% if section.settings.product_description_position == 'below' %}
+      {%- assign position = 'below' -%}
+      {% include 'product-description' %}
+    {% endif %}
+  
+    {% include 'related-products' %}
+  </div>
+  
+  {% unless product == empty %}
+    <script type="application/json" id="ProductJson-{{ section.id }}">
+      {{ product | json }}
+    </script>
+  {% endunless %}
+  
+  <script>
+    // Override default values of shop.strings for each template.
+    // Alternate product templates can change values of
+    // add to cart button, sold out, and unavailable states here.
+    window.productStrings = {
+      addToCart: {{ 'products.product.add_to_cart' | t | json }},
+      soldOut: {{ 'products.product.sold_out' | t | json }},
+      unavailable: {{ 'products.product.unavailable' | t | json }}
+    }
+  </script>
+  
+  <style>
+    .size-options label{
+      font-size: 16px;
+    }
+    .image-source-options label {
+      font-size: 16px;
+  }
+    {% comment %} #ProductSection[data-section-id="{{ section.id }}"] .card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 16px;
+    } {% endcomment %}
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .preview-wrap {
+      border: 1px solid #d5d5d5;
+      border-radius: 0 8px 8px 0;
+      height: 540px;
+      overflow: hidden;
+      background-image:
+        linear-gradient(45deg, #efefef 25%, transparent 25%),
+        linear-gradient(-45deg, #efefef 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #efefef 75%),
+        linear-gradient(-45deg, transparent 75%, #efefef 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .preview-wrap canvas {
+      display: block;
+      background: #fff;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .preview-frame {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      grid-template-rows: 34px 1fr;
+      background: #f3f3f3;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .preview-corner {
+      background: #111;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid #222;
+      border-bottom: 1px solid #222;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .preview-ruler {
+      display: block;
+      background: #f7f7f7;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .preview-ruler--top {
+      width: 100%;
+      height: 34px;
+      border-bottom: 1px solid #222;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .preview-ruler--left {
+      width: 34px;
+      height: 100%;
+      border-right: 1px solid #222;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .controls {
+      display: grid;
+      gap: 12px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .scale-control {
+      display: grid;
+      gap: 12px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .scale-control__label {
+      display: block;
+      margin: 0;
+      color: #111;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: normal;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .scale-control__value {
+      font-size: 16px;
+      font-weight: 400;
+      color: #555;
+      margin-left: 8px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .scale-control__slider {
+      width: 100%;
+      {% comment %} appearance: none; {% endcomment %}
+      {% comment %} -webkit-appearance: none; {% endcomment %}
+      height: 10px;
+      border-radius: 999px;
+      background: #2992cc;
+      outline: none;
+      padding: 0;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .scale-control__slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 0;
+      background: #95cbb8;
+      cursor: pointer;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .scale-control__slider::-moz-range-thumb {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 0;
+      background: #95cbb8;
+      cursor: pointer;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] input[type="number"] {
+      width: 100%;
+      max-width: 130px;
+      padding: 7px 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] input[type="range"] {
+      width: 100%;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .value {
+      min-width: 66px;
+      text-align: right;
+      color: #5a5a5a;
+      font-size: 13px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .hint {
+      margin: 12px 0 0;
+      font-size: 13px;
+      color: #666;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .size-options {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .size-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .heading {
+      margin: 0 0 12px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .image-source-controls {
+      margin: 12px 0;
+      display: grid;
+      gap: 8px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .image-source-options {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 14px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .image-source-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .image-source-button {
+      width: fit-content;
+      padding: 8px 12px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .is-hidden {
+      display: none !important;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-modal.hidden {
+      display: none;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-modal__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-modal__panel {
+      position: relative;
+      width: min(900px, 100%);
+      max-height: 85vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-modal__title {
+      margin: 0;
+      font-size: 18px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-modal__close {
+      border: 1px solid #ccc;
+      background: #fff;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      line-height: 1;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-modal__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-item {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      cursor: pointer;
+      padding: 0;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-item img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+      display: block;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-item span {
+      display: block;
+      padding: 6px 8px;
+      font-size: 12px;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  
+    #ProductSection[data-section-id="{{ section.id }}"] .template-modal__empty {
+      margin: 4px 0 0;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+  
+  <script>
+    (function() {
+      var sectionId = '{{ section.id }}';
+      var productSection = document.querySelector('#ProductSection[data-section-id="' + sectionId + '"]');
+      if (!productSection) return;
+  
+      var form = productSection.querySelector('form.product-form');
+      var uploaderyContainer = document.getElementById('uploadery-container');
+  
+      var canvas = document.getElementById('previewCanvas-' + sectionId);
+      var topRulerCanvas = document.getElementById('previewRulerTop-' + sectionId);
+      var leftRulerCanvas = document.getElementById('previewRulerLeft-' + sectionId);
+      var previewWrap = productSection.querySelector('.custom-preview .preview-wrap');
+      var scaleSlider = document.getElementById('scaleSlider-' + sectionId);
+      var scaleValue = document.getElementById('scaleValue-' + sectionId);
+      var sizeOptions = document.getElementById('sizeOptions-' + sectionId);
+      var sizeValue = document.getElementById('sizeValue-' + sectionId);
+      var widthInput = document.getElementById('widthInput-' + sectionId);
+      var heightInput = document.getElementById('heightInput-' + sectionId);
+      var canvasSizeInput = document.getElementById('CanvasSize-' + sectionId);
+      var canvasScaleInput = document.getElementById('CanvasScale-' + sectionId);
+      var openTemplatePickerButton = document.getElementById('OpenTemplatePicker-' + sectionId);
+      var templateModal = document.getElementById('TemplateModal-' + sectionId);
+      var templateGrid = document.getElementById('TemplateGrid-' + sectionId);
+      var templateEmpty = document.getElementById('TemplateEmpty-' + sectionId);
+      var imageSourcePropertyInput = document.getElementById('ImageSource-' + sectionId);
+      var templateImagePropertyInput = document.getElementById('TemplateImage-' + sectionId);
+      var templateLibraryScript = document.getElementById('TemplateLibraryJson-' + sectionId);
+  
+      if (!canvas || !topRulerCanvas || !leftRulerCanvas || !previewWrap || !scaleSlider || !sizeOptions || !widthInput || !heightInput) return;
+  
+      var ctx = canvas.getContext('2d');
+      var topRulerCtx = topRulerCanvas.getContext('2d');
+      var leftRulerCtx = leftRulerCanvas.getContext('2d');
+      var uploadedImage = null;
+      var imageWidthInches = 3;
+      var imageHeightInches = 3;
+      var imageAspectRatio = 1;
+      var scale = 1;
+      var canvasInches = { width: 3, height: 3 };
+      var pixelsPerInch = 30;
+      var rulerThickness = 34;
+      var lastLoadedUrl = '';
+      var activeSizePreset = '';
+      var templateItems = [];
+      var canonicalImageField = null;
+  
+      function updateScaleValueLabel() {
+        var adjustedWidth = imageWidthInches * scale;
+        var adjustedHeight = imageHeightInches * scale;
+        var label = adjustedWidth.toFixed(2) + ' X ' + adjustedHeight.toFixed(2) + 'in';
+        scaleValue.textContent = label;
+        if (canvasScaleInput) canvasScaleInput.value = label;
+      }
+  
+      function parseTemplateItems() {
+        if (!templateLibraryScript) return [];
+        try {
+          var rawItems = JSON.parse(templateLibraryScript.textContent || '[]');
+          if (!Array.isArray(rawItems)) return [];
+          return rawItems.filter(function(item) {
+            return item && typeof item.url === 'string' && item.url.trim() !== '';
+          }).map(function(item, index) {
+            return {
+              url: item.url.trim(),
+              alt: item.alt || ('Template ' + (index + 1))
+            };
+          });
+        } catch (error) {
+          return [];
+        }
+      }
+  
+      function closeTemplateModal() {
+        if (!templateModal) return;
+        templateModal.classList.add('hidden');
+        templateModal.setAttribute('aria-hidden', 'true');
+      }
+  
+      function openTemplateModal() {
+        if (!templateModal) return;
+        templateModal.classList.remove('hidden');
+        templateModal.setAttribute('aria-hidden', 'false');
+      }
+  
+      function renderTemplateGrid() {
+        if (!templateGrid || !templateEmpty) return;
+        templateGrid.innerHTML = '';
+  
+        if (!templateItems.length) {
+          templateEmpty.classList.remove('hidden');
+          return;
+        }
+  
+        templateEmpty.classList.add('hidden');
+  
+        var i;
+        for (i = 0; i < templateItems.length; i++) {
+          var template = templateItems[i];
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'template-item';
+          button.setAttribute('data-template-url', template.url);
+          button.setAttribute('data-template-alt', template.alt);
+  
+          var img = document.createElement('img');
+          img.src = template.url;
+          img.alt = template.alt;
+          img.loading = 'lazy';
+  
+          var caption = document.createElement('span');
+          caption.textContent = template.alt;
+  
+          button.appendChild(img);
+          button.appendChild(caption);
+          templateGrid.appendChild(button);
+        }
+      }
+  
+      function setImageSourceProperty(value) {
+        if (imageSourcePropertyInput) {
+          imageSourcePropertyInput.value = value;
+        }
+      }
+  
+      function getCurrentImageSourceSelection() {
+        var selected = productSection.querySelector('input[name="imageSource-' + sectionId + '"]:checked');
+        return selected ? selected.value : 'upload';
+      }
+  
+      function updateImageSourceUI(selectedSource) {
+        var useTemplate = selectedSource === 'template';
+  
+        if (uploaderyContainer) {
+          uploaderyContainer.classList.toggle('is-hidden', useTemplate);
+        }
+  
+        if (openTemplatePickerButton) {
+          openTemplatePickerButton.classList.toggle('is-hidden', !useTemplate);
+        }
+  
+        if (!useTemplate) {
+          closeTemplateModal();
+        }
+      }
+  
+      function setImageUrlOnField(url) {
+        if (!url) return;
+        if (!canonicalImageField) return;
+        canonicalImageField.value = url;
+        canonicalImageField.setAttribute('value', url);
+        canonicalImageField.dispatchEvent(new Event('input', { bubbles: true }));
+        canonicalImageField.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+  
+      function applyTemplateImageSelection(url, altText) {
+        if (!url) return;
+        var templateSourceRadio = productSection.querySelector('input[name="imageSource-' + sectionId + '"][value="template"]');
+        if (templateSourceRadio) templateSourceRadio.checked = true;
+        updateImageSourceUI('template');
+        setImageSourceProperty('Template image');
+        if (templateImagePropertyInput) templateImagePropertyInput.value = altText || url;
+        setImageUrlOnField(url);
+        loadImageFromUrl(url);
+        closeTemplateModal();
+      }
+  
+      function syncScaledDimensionInputs() {
+        var adjustedWidth = imageWidthInches * scale;
+        var adjustedHeight = imageHeightInches * scale;
+        widthInput.value = adjustedWidth.toFixed(2);
+        heightInput.value = adjustedHeight.toFixed(2);
+      }
+  
+      function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+  
+      function syncCanvasToViewport() {
+        var width = Math.max(1, Math.round(previewWrap.clientWidth));
+        var height = Math.max(1, Math.round(previewWrap.clientHeight));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        if (topRulerCanvas.width !== width || topRulerCanvas.height !== rulerThickness) {
+          topRulerCanvas.width = width;
+          topRulerCanvas.height = rulerThickness;
+        }
+        if (leftRulerCanvas.width !== rulerThickness || leftRulerCanvas.height !== height) {
+          leftRulerCanvas.width = rulerThickness;
+          leftRulerCanvas.height = height;
+        }
+      }
+  
+      function getMajorStep(unitPixelSize) {
+        if (unitPixelSize >= 20) return 1;
+        if (unitPixelSize >= 10) return 2;
+        if (unitPixelSize >= 6) return 5;
+        return 10;
+      }
+  
+      function drawTopRuler(visibleWidthInches) {
+        var width = topRulerCanvas.width;
+        var height = topRulerCanvas.height;
+        var pixelsPerUnit = width / Math.max(visibleWidthInches, 0.001);
+        var majorStep = getMajorStep(pixelsPerUnit);
+  
+        topRulerCtx.clearRect(0, 0, width, height);
+        topRulerCtx.fillStyle = '#f7f7f7';
+        topRulerCtx.fillRect(0, 0, width, height);
+        topRulerCtx.strokeStyle = '#111';
+        topRulerCtx.fillStyle = '#111';
+        topRulerCtx.lineWidth = 1;
+        topRulerCtx.font = '12px Arial, sans-serif';
+        topRulerCtx.textAlign = 'center';
+        topRulerCtx.textBaseline = 'top';
+  
+        var inch;
+        var maxInches = Math.ceil(visibleWidthInches);
+        for (inch = 0; inch <= maxInches; inch++) {
+          var x = Math.round(inch * pixelsPerUnit) + 0.5;
+          if (x < 0 || x > width + 1) continue;
+          var isMajor = inch % majorStep === 0;
+          var tickHeight = isMajor ? 12 : 7;
+          topRulerCtx.beginPath();
+          topRulerCtx.moveTo(x, height);
+          topRulerCtx.lineTo(x, height - tickHeight);
+          topRulerCtx.stroke();
+          if (isMajor && inch > 0) {
+            var clampedX = Math.max(8, Math.min(width - 8, x));
+            topRulerCtx.fillText(String(inch), clampedX, 3);
+          }
+        }
+      }
+  
+      function drawLeftRuler(visibleHeightInches) {
+        var width = leftRulerCanvas.width;
+        var height = leftRulerCanvas.height;
+        var pixelsPerUnit = height / Math.max(visibleHeightInches, 0.001);
+        var majorStep = getMajorStep(pixelsPerUnit);
+  
+        leftRulerCtx.clearRect(0, 0, width, height);
+        leftRulerCtx.fillStyle = '#f7f7f7';
+        leftRulerCtx.fillRect(0, 0, width, height);
+        leftRulerCtx.strokeStyle = '#111';
+        leftRulerCtx.fillStyle = '#111';
+        leftRulerCtx.lineWidth = 1;
+        leftRulerCtx.font = '12px Arial, sans-serif';
+        leftRulerCtx.textAlign = 'left';
+        leftRulerCtx.textBaseline = 'middle';
+  
+        var inch;
+        var maxInches = Math.ceil(visibleHeightInches);
+        for (inch = 0; inch <= maxInches; inch++) {
+          var y = Math.round(inch * pixelsPerUnit) + 0.5;
+          if (y < 0 || y > height + 1) continue;
+          var isMajor = inch % majorStep === 0;
+          var tickWidth = isMajor ? 12 : 7;
+          leftRulerCtx.beginPath();
+          leftRulerCtx.moveTo(width, y);
+          leftRulerCtx.lineTo(width - tickWidth, y);
+          leftRulerCtx.stroke();
+          if (isMajor && inch > 0) {
+            var clampedY = Math.max(8, Math.min(height - 8, y));
+            leftRulerCtx.fillText(String(inch), 3, clampedY);
+          }
+        }
+      }
+  
+      function drawRulers() {
+        drawTopRuler(canvasInches.width);
+        drawLeftRuler(canvasInches.height);
+      }
+  
+      function drawImage() {
+        syncCanvasToViewport();
+        drawRulers();
+  
+        if (!uploadedImage) {
+          clearCanvas();
+          return;
+        }
+  
+        var pxPerInch = Math.min(
+          canvas.width / Math.max(canvasInches.width, 0.001),
+          canvas.height / Math.max(canvasInches.height, 0.001)
+        );
+        var drawWidth = Math.max(1, Math.round(imageWidthInches * scale * pxPerInch));
+        var drawHeight = Math.max(1, Math.round(imageHeightInches * scale * pxPerInch));
+  
+        clearCanvas();
+        ctx.imageSmoothingEnabled = true;
+  
+        // Always use repeat pattern so scaling does not jump modes around 1x.
+        var tileCanvas = document.createElement('canvas');
+        tileCanvas.width = drawWidth;
+        tileCanvas.height = drawHeight;
+        var tileCtx = tileCanvas.getContext('2d');
+        tileCtx.imageSmoothingEnabled = true;
+        tileCtx.drawImage(uploadedImage, 0, 0, drawWidth, drawHeight);
+  
+        var pattern = ctx.createPattern(tileCanvas, 'repeat');
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+  
+      function syncDimensionInputs() {
+        syncScaledDimensionInputs();
+      }
+  
+      function updateImageDimensionsFromSize() {
+        imageWidthInches = canvasInches.width;
+        imageHeightInches = imageWidthInches * imageAspectRatio;
+        syncDimensionInputs();
+      }
+  
+      function loadImageFromUrl(url) {
+        if (!url || url === lastLoadedUrl) return;
+  
+        function handleLoadedImage(img) {
+          uploadedImage = img;
+          lastLoadedUrl = url;
+          imageAspectRatio = img.naturalHeight > 0 && img.naturalWidth > 0 ? img.naturalHeight / img.naturalWidth : 1;
+          updateImageDimensionsFromSize();
+          scale = 1;
+          scaleSlider.value = '1';
+          updateScaleValueLabel();
+          drawImage();
+        }
+  
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+          handleLoadedImage(img);
+        };
+        img.onerror = function() {
+          // Retry without CORS mode for hosts that do not set CORS headers.
+          var fallbackImg = new Image();
+          fallbackImg.onload = function() {
+            handleLoadedImage(fallbackImg);
+          };
+          fallbackImg.onerror = function() {
+          };
+          fallbackImg.src = url;
+        };
+        img.src = url;
+      }
+  
+      function applyCanvasSizePreset(value) {
+        if (!value || value === activeSizePreset) return;
+  
+        var parts = value.split('x');
+        var width = parseFloat(parts[0]);
+        var height = parseFloat(parts[1]);
+  
+        if (!isFinite(width) || !isFinite(height) || width <= 0 || height <= 0) return;
+  
+        canvasInches = { width: width, height: height };
+        activeSizePreset = value;
+        if (sizeValue) {
+          sizeValue.textContent = height === width ? width + '"' : width + '" x ' + height + '"';
+        }
+        if (canvasSizeInput) canvasSizeInput.value = value;
+        updateImageDimensionsFromSize();
+        updateScaleValueLabel();
+        drawImage();
+      }
+  
+      function getSelectedSizePresetValue() {
+        var radios = productSection.querySelectorAll('input[type="radio"][name^="canvasSize-"]');
+        var i;
+        for (i = 0; i < radios.length; i++) {
+          if (radios[i].checked && radios[i].value && radios[i].value.indexOf('x') !== -1) {
+            return radios[i].value;
+          }
+        }
+  
+        if (canvasSizeInput && canvasSizeInput.value && canvasSizeInput.value.indexOf('x') !== -1) {
+          return canvasSizeInput.value;
+        }
+  
+        return '';
+      }
+  
+      function syncSizeFromCheckedRadio() {
+        var selectedValue = getSelectedSizePresetValue();
+        if (!selectedValue) return;
+        applyCanvasSizePreset(selectedValue);
+      }
+  
+      function getUploadImageUrlFromField(field) {
+        if (!field) return '';
+  
+        var fieldValue = (field.value || '').trim();
+        if (!fieldValue) return '';
+  
+        var fieldName = (field.name || '').toLowerCase();
+        var fieldId = (field.id || '').toLowerCase();
+  
+        if (fieldName.indexOf('uploaded_image') !== -1 || fieldId.indexOf('uploaded_image') !== -1) {
+          return fieldValue;
+        }
+  
+        if (fieldValue.indexOf('http://') === 0 || fieldValue.indexOf('https://') === 0) {
+          if (fieldValue.indexOf('uploadery.s3') !== -1 || fieldValue.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i)) {
+            return fieldValue;
+          }
+        }
+  
+        return '';
+      }
+  
+      function findUploadedImageField() {
+        var searchRoots = [];
+        if (form) searchRoots.push(form);
+        if (uploaderyContainer) searchRoots.push(uploaderyContainer);
+        searchRoots.push(productSection);
+        searchRoots.push(document);
+  
+        var i;
+        for (i = 0; i < searchRoots.length; i++) {
+          var root = searchRoots[i];
+          if (!root || !root.querySelectorAll) continue;
+  
+          var candidates = root.querySelectorAll('input[type="hidden"], input[type="text"], input[type="url"]');
+          var j;
+          for (j = 0; j < candidates.length; j++) {
+            var candidate = candidates[j];
+            var url = getUploadImageUrlFromField(candidate);
+            if (url) return candidate;
+          }
+        }
+  
+        return null;
+      }
+  
+      var uploadedImageInput = null;
+  
+      function syncUploadedImageField() {
+        var found = findUploadedImageField();
+        if (found) uploadedImageInput = found;
+      }
+  
+      function tryLoadFromHiddenInput() {
+        syncUploadedImageField();
+        if (!uploadedImageInput) return;
+        var url = getUploadImageUrlFromField(uploadedImageInput);
+        if (url) loadImageFromUrl(url);
+      }
+  
+      // Ensure a standard line-item property exists for cart if app uses a different field.
+      if (form) {
+        canonicalImageField = form.querySelector('[name="properties[Uploaded_Image]"]');
+        if (!canonicalImageField) {
+          canonicalImageField = document.createElement('input');
+          canonicalImageField.type = 'hidden';
+          canonicalImageField.name = 'properties[Uploaded_Image]';
+          canonicalImageField.id = 'Uploaded_Image-' + sectionId;
+          form.appendChild(canonicalImageField);
+        }
+      }
+  
+      templateItems = parseTemplateItems();
+      renderTemplateGrid();
+  
+      // Force default source to upload on every fresh page load.
+      var defaultUploadSource = productSection.querySelector('input[name="imageSource-' + sectionId + '"][value="upload"]');
+      if (defaultUploadSource) {
+        defaultUploadSource.checked = true;
+      }
+      setImageSourceProperty('Uploaded image');
+      if (templateImagePropertyInput) templateImagePropertyInput.value = '';
+      updateImageSourceUI('upload');
+  
+      if (openTemplatePickerButton) {
+        openTemplatePickerButton.addEventListener('click', function() {
+          openTemplateModal();
+        });
+      }
+  
+      if (templateGrid) {
+        templateGrid.addEventListener('click', function(event) {
+          var target = event.target;
+          var item = target && target.closest ? target.closest('.template-item') : null;
+          if (!item) return;
+          applyTemplateImageSelection(item.getAttribute('data-template-url'), item.getAttribute('data-template-alt'));
+        });
+      }
+  
+      if (templateModal) {
+        templateModal.addEventListener('click', function(event) {
+          var target = event.target;
+          if (target && target.hasAttribute && target.hasAttribute('data-close-template-modal')) {
+            closeTemplateModal();
+          }
+        });
+      }
+  
+      productSection.addEventListener('change', function(event) {
+        var target = event.target;
+        if (!target || target.name !== ('imageSource-' + sectionId)) return;
+        if (target.value === 'upload') {
+          updateImageSourceUI('upload');
+          setImageSourceProperty('Uploaded image');
+        } else if (target.value === 'template') {
+          updateImageSourceUI('template');
+          setImageSourceProperty('Template image');
+          openTemplateModal();
+        }
+      });
+  
+      tryLoadFromHiddenInput();
+      productSection.addEventListener('change', tryLoadFromHiddenInput);
+      productSection.addEventListener('input', tryLoadFromHiddenInput);
+  
+      var observer = new MutationObserver(function() {
+        tryLoadFromHiddenInput();
+        if (uploadedImageInput && form) {
+          var canonical = form.querySelector('[name="properties[Uploaded_Image]"]');
+          var canonicalUrl = canonical ? (canonical.value || '').trim() : '';
+          var detectedUrl = getUploadImageUrlFromField(uploadedImageInput);
+          if (canonical && detectedUrl && canonicalUrl !== detectedUrl) {
+            canonical.value = detectedUrl;
+          }
+        }
+      });
+      observer.observe(productSection, { childList: true, subtree: true, attributes: true, attributeFilter: ['value'] });
+  
+      setInterval(tryLoadFromHiddenInput, 800);
+  
+      scaleSlider.addEventListener('input', function() {
+        scale = parseFloat(scaleSlider.value) || 1;
+        updateScaleValueLabel();
+        syncScaledDimensionInputs();
+        drawImage();
+      });
+  
+      widthInput.addEventListener('input', function() {
+        var width = parseFloat(widthInput.value);
+        if (!isFinite(width) || width <= 0) return;
+        imageWidthInches = width / Math.max(scale, 0.001);
+        imageHeightInches = imageWidthInches * imageAspectRatio;
+        syncDimensionInputs();
+        updateScaleValueLabel();
+        drawImage();
+      });
+  
+      heightInput.addEventListener('input', function() {
+        var height = parseFloat(heightInput.value);
+        if (!isFinite(height) || height <= 0) return;
+        imageHeightInches = height / Math.max(scale, 0.001);
+        imageWidthInches = imageHeightInches / Math.max(imageAspectRatio, 0.001);
+        syncDimensionInputs();
+        updateScaleValueLabel();
+        drawImage();
+      });
+  
+      function handleSizeSelection(target) {
+        if (target && target.tagName && target.tagName.toLowerCase() === 'label') {
+          var nested = target.querySelector('input[type="radio"]');
+          if (nested) target = nested;
+        }
+        if (!target || target.type !== 'radio') return;
+        if (!target.value || target.value.indexOf('x') === -1) return;
+        applyCanvasSizePreset(target.value);
+      }
+  
+      // Delegate for dynamically updated DOM.
+      productSection.addEventListener('change', function(event) {
+        handleSizeSelection(event.target);
+        syncSizeFromCheckedRadio();
+      }, true);
+      productSection.addEventListener('click', function(event) {
+        handleSizeSelection(event.target);
+        setTimeout(syncSizeFromCheckedRadio, 0);
+      }, true);
+  
+      // Direct listeners make updates immediate and reliable on all themes/browsers.
+      var sizeRadios = productSection.querySelectorAll('input[type="radio"][name^="canvasSize-"]');
+      var idx;
+      for (idx = 0; idx < sizeRadios.length; idx++) {
+        sizeRadios[idx].addEventListener('change', function(event) {
+          handleSizeSelection(event.target);
+        });
+        sizeRadios[idx].addEventListener('click', function(event) {
+          handleSizeSelection(event.target);
+        });
+      }
+  
+      window.addEventListener('resize', drawImage);
+      applyCanvasSizePreset('3x3');
+      syncDimensionInputs();
+      updateScaleValueLabel();
+      syncSizeFromCheckedRadio();
+  
+      // Fallback sync in case another script interferes with events.
+      setInterval(syncSizeFromCheckedRadio, 300);
+    })();
+  </script>
+  
+  
+  
+  {% schema %}
+  {
+    "name": {
+      "de": "Produktseiten",
+      "en": "Product pages",
+      "es": "Páginas de productos",
+      "fr": "Pages de produits",
+      "it": "Pagine di prodotto",
+      "ja": "商品ページ",
+      "nl": "Productpagina's",
+      "pt-BR": "Páginas de produtos",
+      "zh-CN": "产品页面",
+      "zh-TW": "產品頁面"
+    },
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "product_quantity_enable",
+        "label": {
+          "de": "Mengenauswahl anzeigen",
+          "en": "Show quantity selector",
+          "es": "Mostrar selector de cantidad",
+          "fr": "Afficher le sélecteur de quantité",
+          "it": "Mostra selettore quantità",
+          "ja": "数量セレクターを表示する",
+          "nl": "Hoeveelheidskiezer weergeven",
+          "pt-BR": "Exiba um seletor de quantidade",
+          "zh-CN": "显示数量选择器",
+          "zh-TW": "顯示數量選擇器"
+        }
+      },
+      {
+        "type": "checkbox",
+        "id": "vendor_show",
+        "label": {
+          "de": "Produktverkäufer anzeigen",
+          "en": "Show product vendor",
+          "es": "Mostrar proveedor del producto",
+          "fr": "Afficher le distributeur du produit",
+          "it": "Mostra fornitore prodotto",
+          "ja": "商品の販売元を表示する",
+          "nl": "Productleverancier weergeven",
+          "pt-BR": "Exiba o fornecedor do produto",
+          "zh-CN": "显示产品厂商",
+          "zh-TW": "顯示產品廠商"
+        }
+      },
+      {
+        "type": "checkbox",
+        "id": "social_sharing_products",
+        "label": {
+          "de": "Teilen von Produkten aktivieren",
+          "en": "Enable sharing for products",
+          "es": "Habilitar compartir para los productos",
+          "fr": "Activer le partage pour les produits",
+          "it": "Permetti condivisione prodotti",
+          "ja": "商品の共有を有効にする",
+          "nl": "Delen inschakelen voor producten",
+          "pt-BR": "Ativar compartilhamento para produtos",
+          "zh-CN": "启用产品分享",
+          "zh-TW": "啟用產品分享"
+        },
+        "default": true
+      },
+      {
+        "type": "header",
+        "content": {
+          "de": "Beschreibung",
+          "en": "Description",
+          "es": "Descripción",
+          "fr": "Description",
+          "it": "Descrizione",
+          "ja": "説明",
+          "nl": "Beschrijving",
+          "pt-BR": "Descrição",
+          "zh-CN": "描述",
+          "zh-TW": "說明"
+        }
+      },
+      {
+        "type": "select",
+        "id": "product_description_position",
+        "label": {
+          "de": "Position",
+          "en": "Position",
+          "es": "Posición",
+          "fr": "Position",
+          "it": "Posizione",
+          "ja": "位置",
+          "nl": "Positie",
+          "pt-BR": "Posição",
+          "zh-CN": "位置",
+          "zh-TW": "位置"
+        },
+        "default": "below",
+        "options": [
+          {
+            "value": "right",
+            "label": {
+              "de": "Rechte von Bildern",
+              "en": "Right of images",
+              "es": "A la derecha de las imágenes",
+              "fr": "Droit d'images",
+              "it": "A destra delle immagini",
+              "ja": "画像の右",
+              "nl": "Rechts van afbeeldingen",
+              "pt-BR": "Direito de imagens",
+              "zh-CN": "图片右侧",
+              "zh-TW": "圖片右方"
+            }
+          },
+          {
+            "value": "below",
+            "label": {
+              "de": "Unter Bildern",
+              "en": "Below images",
+              "es": "Debajo de las imágenes",
+              "fr": "Sous les images",
+              "it": "Sotto le immagini",
+              "ja": "画像の下",
+              "nl": "Onder afbeeldingen",
+              "pt-BR": "Imagens abaixo",
+              "zh-CN": "图片下方",
+              "zh-TW": "圖片下方"
+            }
+          }
+        ]
+      },
+      {
+        "type": "checkbox",
+        "id": "show_extra_tab",
+        "label": {
+          "de": "Ein Tab neben Ihrer Produktbeschreibung anzeigen",
+          "en": "Show a tab next to your product description",
+          "es": "Mostrar una pestaña al lado de la descripción de tu producto",
+          "fr": "Afficher un onglet en regard de la description de votre produit",
+          "it": "Mostra una scheda accanto alla descrizione del prodotto",
+          "ja": "商品説明の横にタブを表示する",
+          "nl": "Laat tabblad zien naast uw productbeschrijving",
+          "pt-BR": "Exibir uma guia ao lado da descrição do seu produto",
+          "zh-CN": "显示产品描述旁边的标签",
+          "zh-TW": "於產品說明旁邊顯示索引標籤"
+        },
+        "default": false
+      },
+      {
+        "type": "page",
+        "id": "extra_tab_content",
+        "label": {
+          "de": "Tab-Inhalt",
+          "en": "Tab content",
+          "es": "Contenido de la pestaña",
+          "fr": "Contenu de l'onglet",
+          "it": "Contenuto della scheda",
+          "ja": "タブのコンテンツ",
+          "nl": "Inhoud tabblad",
+          "pt-BR": "Conteúdo da guia",
+          "zh-CN": "标签内容",
+          "zh-TW": "索引標籤內容"
+        },
+        "info": {
+          "de": "Der Inhalt dieser Seite wird auf der zusätzlichen Registerkarte angezeigt.",
+          "en": "This page content will appear in the extra tab.",
+          "es": "El contenido de esta página aparecerá en la pestaña adicional.",
+          "fr": "Le contenu de cette page s'affichera dans l'onglet supplémentaire.",
+          "it": "Il contenuto di questa pagina verrà visualizzato nella scheda aggiuntiva.",
+          "ja": "このページのコンテンツは追加のタブに表示されます。",
+          "nl": "De inhoud van deze pagina verschijnt in het extra tabblad.",
+          "pt-BR": "O conteúdo dessa página aparecerá na guia extra.",
+          "zh-CN": "此页内容将显示在额外标签中。",
+          "zh-TW": "此頁面內容將出現在額外索引標籤。"
+        }
+      },
+      {
+        "type": "header",
+        "content": {
+          "de": "Feature-Bild",
+          "en": "Featured image",
+          "es": "Imagen destacada",
+          "fr": "Image en vedette",
+          "it": "Immagine in evidenza",
+          "ja": "記事のサムネイル",
+          "nl": "Uitgelichte afbeelding",
+          "pt-BR": "Imagem em destaque",
+          "zh-CN": "配图",
+          "zh-TW": "特色圖片"
+        }
+      },
+      {
+        "type": "select",
+        "id": "product_image_zoom_type",
+        "label": {
+          "de": "Zoomtyp",
+          "en": "Zoom type",
+          "es": "Tipo de zoom",
+          "fr": "Type de zoom",
+          "it": "Tipo di zoom",
+          "ja": "ズームタイプ",
+          "nl": "Type zoom",
+          "pt-BR": "Tipo de zoom",
+          "zh-CN": "缩放类型",
+          "zh-TW": "縮放類型"
+        },
+        "options": [
+          {
+            "value": "lightbox",
+            "label": {
+              "de": "Leuchtkasten",
+              "en": "Lightbox",
+              "es": "Lightbox",
+              "fr": "Visionneuse d'image",
+              "it": "Lightbox",
+              "ja": "Lightbox",
+              "nl": "Lightbox",
+              "pt-BR": "Lightbox",
+              "zh-CN": "灯箱",
+              "zh-TW": "燈箱"
+            }
+          },
+          {
+            "value": "zoom-in",
+            "label": {
+              "de": "Heranzoomen",
+              "en": "Zoom-in",
+              "es": "Acercar",
+              "fr": "Zoom avant",
+              "it": "Zoom avanti",
+              "ja": "ズームイン",
+              "nl": "Inzoomen",
+              "pt-BR": "Mais zoom",
+              "zh-CN": "缩小",
+              "zh-TW": "放大"
+            }
+          },
+          {
+            "value": "none",
+            "label": {
+              "de": "Nicht zoomen",
+              "en": "No zoom",
+              "es": "Sin zoom",
+              "fr": "Pas de zoom",
+              "it": "Nessun zoom",
+              "ja": "ズームなし",
+              "nl": "Geen zoom",
+              "pt-BR": "Sem zoom",
+              "zh-CN": "无缩放",
+              "zh-TW": "無縮放"
+            }
+          }
+        ]
+      },
+      {
+        "type": "header",
+        "content": {
+          "de": "Schaltfläche In den Warenkorb",
+          "en": "Add to cart button",
+          "es": "Añadir al carrito",
+          "fr": "Bouton d'ajout au panier",
+          "it": "Pulsante \"Aggiungi al carrello\"",
+          "ja": "カートボタンに追加する",
+          "nl": "Knop aan winkelwagen toevoegen",
+          "pt-BR": "Botão Adicionar ao carrinho",
+          "zh-CN": "“添加到购物车”按钮",
+          "zh-TW": "加入購物車按鈕"
+        }
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_payment_button",
+        "label": {
+          "de": "Dynamischen Checkout Button anzeigen",
+          "en": "Show dynamic checkout button",
+          "es": "Mostrar botón de pago dinámico",
+          "fr": "Afficher le bouton de passage à la caisse dynamique",
+          "it": "Mostra pulsante di check-out dinamico",
+          "ja": "ダイナミックチェックアウトボタンを表示する",
+          "nl": "Dynamische kassaknop weergeven",
+          "pt-BR": "Exibir botão dinâmico de finalização da compra",
+          "zh-CN": "显示动态结账按钮",
+          "zh-TW": "顯示動態結帳按鈕"
+        },
+        "info": {
+          "de": "Jeder Kunde sieht seine bevorzugte Zahlungsmethode aus den in Ihrem Shop verfügbaren Zahlungsmethoden wie PayPal oder Apple Pay. [Mehr Infos](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+          "en": "Each customer will see their preferred payment method from those available on your store, such as PayPal or Apple Pay. [Learn more](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+          "es": "Cada cliente verá su forma de pago preferida entre las disponibles en tu tienda, como PayPal o Apple Pay. [Más información](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+          "fr": "Chaque client verra son moyen de paiement préféré parmi ceux qui sont proposés sur votre boutique, tels que PayPal ou Apple Pay. [En savoir plus](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+          "it": "Ogni cliente vedrà il suo metodo di pagamento preferito tra quelli disponibili nel tuo negozio, come PayPal o Apple Pay. [Maggiori informazioni](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+          "ja": "PayPalやApple Payなど、ストアで利用可能な希望の決済方法がお客様に表示されます。[もっと詳しく](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+          "nl": "Elke klant ziet zijn of haar beschikbare voorkeursmethode om af te rekenen, zoals PayPal of Apple Pay. [Meer informatie](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+          "pt-BR": "Cada cliente verá seu método de pagamento preferido dentre os disponíveis na loja, como PayPal ou Apple Pay. [Saiba mais](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+          "zh-CN": "每位客户都可在您商店提供的付款方式中看到他们的首选付款方式，例如 PayPal 或 Apple Pay。[了解详细信息](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+          "zh-TW": "每位客戶都可以在您商店內開放使用的付款方式中看見他們偏好使用的方式，如 PayPal、Apple Pay 等。[深入瞭解相關資訊](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)"
+        },
+        "default": true
+      },
+      {
+        "type": "select",
+        "id": "add_to_cart_width",
+        "label": {
+          "de": "Schaltflächengröße",
+          "en": "Button size",
+          "es": "Tamaño del botón",
+          "fr": "Taille du bouton",
+          "it": "Dimensione pulsante",
+          "ja": "ボタンのサイズ",
+          "nl": "Afmeting knop",
+          "pt-BR": "Tamanho do botão",
+          "zh-CN": "按钮大小",
+          "zh-TW": "按鈕尺寸"
+        },
+        "options": [
+          {
+            "value": "regular",
+            "label": {
+              "de": "Regulär",
+              "en": "Regular",
+              "es": "Normal",
+              "fr": "Normal",
+              "it": "Regolare",
+              "ja": "通常",
+              "nl": "Standaard",
+              "pt-BR": "Regular",
+              "zh-CN": "常规",
+              "zh-TW": "標準"
+            }
+          },
+          {
+            "value": "full_width",
+            "label": {
+              "de": "Volle Breite",
+              "en": "Full width",
+              "es": "Ancho completo",
+              "fr": "Pleine largeur",
+              "it": "Intera larghezza",
+              "ja": "全幅",
+              "nl": "Volledige breedte",
+              "pt-BR": "Largura completa",
+              "zh-CN": "全宽",
+              "zh-TW": "全寬度"
+            }
+          }
+        ]
+      }
+    ]
+  }
+  {% endschema %}
+  

@@ -69,7 +69,7 @@
           {%- endif -%}
 
           {% form 'product', product, class:'product-form' %}
-            <select name="id" id="ProductSelect-{{ section.id }}" class="product-single__variants">
+            {% comment %} <select name="id" id="ProductSelect-{{ section.id }}" class="product-single__variants">
               {% for variant in product.variants %}
                 {% if variant.available %}
                   <option {% if variant == product.selected_or_first_available_variant %} selected="selected" {% endif %} data-sku="{{ variant.sku }}" value="{{ variant.id }}">{{ variant.title }} - {{ variant.price | money_with_currency }}</option>
@@ -79,24 +79,24 @@
                   </option>
                 {% endif %}
               {% endfor %}
-            </select>
+            </select> {% endcomment %}
           
 <div id="uploadery-container"></div>
-{% assign designs = shop.metaobjects.design_library.values %}
 
-{% if designs %}
-  <div class="design-gallery">
-    {% for item in designs %}
-      <img 
-        src="{{ item.image | image_url: width: 200 }}"
-        data-full="{{ item.image | image_url: width: 1000 }}"
-        class="design-thumb"
-        loading="lazy"
-        style="cursor:pointer; width:80px; margin:5px;"
-      >
-    {% endfor %}
-  </div>
-{% endif %}
+            <div class="image-source-controls">
+              {% comment %} <div class="image-source-options">
+                <label><input type="radio" name="imageSource-{{ section.id }}" value="upload" checked> Upload my image</label>
+                <label><input type="radio" name="imageSource-{{ section.id }}" value="template"> Choose template</label>
+              </div> {% endcomment %}
+              <div class="image-source-options">
+                <label><input type="radio" checked> Upload my image</label>
+                <label><input type="radio" > Choose template</label>
+              </div>
+              <button type="button" id="OpenTemplatePicker-{{ section.id }}" class="btn image-source-button">Open template library</button>
+              <input type="hidden" id="ImageSource-{{ section.id }}" name="properties[Image_Source]" value="Uploaded image">
+              <input type="hidden" id="TemplateImage-{{ section.id }}" name="properties[Template_Image]" value="">
+            </div>
+
             <div class="custom-controls card">
               {% comment %} <h2 class="heading">Controls</h2> {% endcomment %}
               <div class="controls">
@@ -161,6 +161,39 @@
 
           {% endform %}
 
+          {% assign design_library_value = shop.metafields.custom.design_library.value %}
+          {% if design_library_value != blank %}
+            <script type="application/json" id="TemplateLibraryJson-{{ section.id }}">
+              [
+                {% if design_library_value.url != blank %}
+                  {
+                    "url": {{ design_library_value.url | json }},
+                    "alt": {{ design_library_value.alt | default: design_library_value.filename | default: 'Template image' | json }}
+                  }
+                {% else %}
+                  {% for template_file in design_library_value %}
+                    {
+                      "url": {% if template_file.url != blank %}{{ template_file.url | json }}{% elsif template_file.preview_image %}{{ template_file.preview_image | image_url: width: 1500 | json }}{% else %}""{% endif %},
+                      "alt": {{ template_file.alt | default: template_file.filename | default: 'Template image' | json }}
+                    }{% unless forloop.last %},{% endunless %}
+                  {% endfor %}
+                {% endif %}
+              ]
+            </script>
+          {% endif %}
+
+          <div class="template-modal hidden" id="TemplateModal-{{ section.id }}" aria-hidden="true">
+            <div class="template-modal__backdrop" data-close-template-modal></div>
+            <div class="template-modal__panel" role="dialog" aria-modal="true" aria-label="Template library">
+              <div class="template-modal__header">
+                <h3 class="template-modal__title">Choose an image from the library</h3>
+                <button type="button" class="template-modal__close" data-close-template-modal aria-label="Close">X</button>
+              </div>
+              <div class="template-modal__grid" id="TemplateGrid-{{ section.id }}"></div>
+              <p class="template-modal__empty hidden" id="TemplateEmpty-{{ section.id }}">No template images found.</p>
+            </div>
+          </div>
+
         </div>
 
         {% if section.settings.product_description_position == 'right' %}
@@ -202,6 +235,12 @@
 </script>
 
 <style>
+  .size-options label{
+    font-size: 16px;
+  }
+  .image-source-options label {
+    font-size: 16px;
+}
   {% comment %} #ProductSection[data-section-id="{{ section.id }}"] .card {
     background: #fff;
     border: 1px solid #ddd;
@@ -306,6 +345,7 @@
     border-radius: 999px;
     background: #2992cc;
     outline: none;
+    padding: 0;
   }
 
   #ProductSection[data-section-id="{{ section.id }}"] .scale-control__slider::-webkit-slider-thumb {
@@ -330,7 +370,7 @@
 
   #ProductSection[data-section-id="{{ section.id }}"] .row {
     display: grid;
-    grid-template-columns: 90px 1fr;
+    grid-template-columns: 100px 1fr;
     align-items: center;
     gap: 10px;
   }
@@ -380,6 +420,127 @@
     font-size: 18px;
     font-weight: 700;
   }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .image-source-controls {
+    margin: 12px 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .image-source-options {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .image-source-options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .image-source-button {
+    width: fit-content;
+    padding: 8px 12px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .is-hidden {
+    display: none !important;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal.hidden {
+    display: none;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__panel {
+    position: relative;
+    width: min(900px, 100%);
+    max-height: 85vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__title {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__close {
+    border: 1px solid #ccc;
+    background: #fff;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    line-height: 1;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-item img {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    display: block;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-item span {
+    display: block;
+    padding: 6px 8px;
+    font-size: 12px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__empty {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: #555;
+  }
 </style>
 
 <script>
@@ -403,6 +564,13 @@
     var heightInput = document.getElementById('heightInput-' + sectionId);
     var canvasSizeInput = document.getElementById('CanvasSize-' + sectionId);
     var canvasScaleInput = document.getElementById('CanvasScale-' + sectionId);
+    var openTemplatePickerButton = document.getElementById('OpenTemplatePicker-' + sectionId);
+    var templateModal = document.getElementById('TemplateModal-' + sectionId);
+    var templateGrid = document.getElementById('TemplateGrid-' + sectionId);
+    var templateEmpty = document.getElementById('TemplateEmpty-' + sectionId);
+    var imageSourcePropertyInput = document.getElementById('ImageSource-' + sectionId);
+    var templateImagePropertyInput = document.getElementById('TemplateImage-' + sectionId);
+    var templateLibraryScript = document.getElementById('TemplateLibraryJson-' + sectionId);
 
     if (!canvas || !topRulerCanvas || !leftRulerCanvas || !previewWrap || !scaleSlider || !sizeOptions || !widthInput || !heightInput) return;
 
@@ -419,6 +587,8 @@
     var rulerThickness = 34;
     var lastLoadedUrl = '';
     var activeSizePreset = '';
+    var templateItems = [];
+    var canonicalImageField = null;
 
     function updateScaleValueLabel() {
       var adjustedWidth = imageWidthInches * scale;
@@ -426,6 +596,118 @@
       var label = adjustedWidth.toFixed(2) + ' X ' + adjustedHeight.toFixed(2) + 'in';
       scaleValue.textContent = label;
       if (canvasScaleInput) canvasScaleInput.value = label;
+    }
+
+    function parseTemplateItems() {
+      if (!templateLibraryScript) return [];
+      try {
+        var rawItems = JSON.parse(templateLibraryScript.textContent || '[]');
+        if (!Array.isArray(rawItems)) return [];
+        return rawItems.filter(function(item) {
+          return item && typeof item.url === 'string' && item.url.trim() !== '';
+        }).map(function(item, index) {
+          return {
+            url: item.url.trim(),
+            alt: item.alt || ('Template ' + (index + 1))
+          };
+        });
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function closeTemplateModal() {
+      if (!templateModal) return;
+      templateModal.classList.add('hidden');
+      templateModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function openTemplateModal() {
+      if (!templateModal) return;
+      templateModal.classList.remove('hidden');
+      templateModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function renderTemplateGrid() {
+      if (!templateGrid || !templateEmpty) return;
+      templateGrid.innerHTML = '';
+
+      if (!templateItems.length) {
+        templateEmpty.classList.remove('hidden');
+        return;
+      }
+
+      templateEmpty.classList.add('hidden');
+
+      var i;
+      for (i = 0; i < templateItems.length; i++) {
+        var template = templateItems[i];
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'template-item';
+        button.setAttribute('data-template-url', template.url);
+        button.setAttribute('data-template-alt', template.alt);
+
+        var img = document.createElement('img');
+        img.src = template.url;
+        img.alt = template.alt;
+        img.loading = 'lazy';
+
+        var caption = document.createElement('span');
+        caption.textContent = template.alt;
+
+        button.appendChild(img);
+        button.appendChild(caption);
+        templateGrid.appendChild(button);
+      }
+    }
+
+    function setImageSourceProperty(value) {
+      if (imageSourcePropertyInput) {
+        imageSourcePropertyInput.value = value;
+      }
+    }
+
+    function getCurrentImageSourceSelection() {
+      var selected = productSection.querySelector('input[name="imageSource-' + sectionId + '"]:checked');
+      return selected ? selected.value : 'upload';
+    }
+
+    function updateImageSourceUI(selectedSource) {
+      var useTemplate = selectedSource === 'template';
+
+      if (uploaderyContainer) {
+        uploaderyContainer.classList.toggle('is-hidden', useTemplate);
+      }
+
+      if (openTemplatePickerButton) {
+        openTemplatePickerButton.classList.toggle('is-hidden', !useTemplate);
+      }
+
+      if (!useTemplate) {
+        closeTemplateModal();
+      }
+    }
+
+    function setImageUrlOnField(url) {
+      if (!url) return;
+      if (!canonicalImageField) return;
+      canonicalImageField.value = url;
+      canonicalImageField.setAttribute('value', url);
+      canonicalImageField.dispatchEvent(new Event('input', { bubbles: true }));
+      canonicalImageField.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function applyTemplateImageSelection(url, altText) {
+      if (!url) return;
+      var templateSourceRadio = productSection.querySelector('input[name="imageSource-' + sectionId + '"][value="template"]');
+      if (templateSourceRadio) templateSourceRadio.checked = true;
+      updateImageSourceUI('template');
+      setImageSourceProperty('Template image');
+      if (templateImagePropertyInput) templateImagePropertyInput.value = altText || url;
+      setImageUrlOnField(url);
+      loadImageFromUrl(url);
+      closeTemplateModal();
     }
 
     function syncScaledDimensionInputs() {
@@ -621,7 +903,9 @@
 
       canvasInches = { width: width, height: height };
       activeSizePreset = value;
-      sizeValue.textContent = height === width ? width + '"' : width + '" x ' + height + '"';
+      if (sizeValue) {
+        sizeValue.textContent = height === width ? width + '"' : width + '" x ' + height + '"';
+      }
       if (canvasSizeInput) canvasSizeInput.value = value;
       updateImageDimensionsFromSize();
       updateScaleValueLabel();
@@ -711,13 +995,65 @@
     }
 
     // Ensure a standard line-item property exists for cart if app uses a different field.
-    if (form && !form.querySelector('[name="properties[Uploaded_Image]"]')) {
-      var canonicalField = document.createElement('input');
-      canonicalField.type = 'hidden';
-      canonicalField.name = 'properties[Uploaded_Image]';
-      canonicalField.id = 'Uploaded_Image-' + sectionId;
-      form.appendChild(canonicalField);
+    if (form) {
+      canonicalImageField = form.querySelector('[name="properties[Uploaded_Image]"]');
+      if (!canonicalImageField) {
+        canonicalImageField = document.createElement('input');
+        canonicalImageField.type = 'hidden';
+        canonicalImageField.name = 'properties[Uploaded_Image]';
+        canonicalImageField.id = 'Uploaded_Image-' + sectionId;
+        form.appendChild(canonicalImageField);
+      }
     }
+
+    templateItems = parseTemplateItems();
+    renderTemplateGrid();
+
+    // Force default source to upload on every fresh page load.
+    var defaultUploadSource = productSection.querySelector('input[name="imageSource-' + sectionId + '"][value="upload"]');
+    if (defaultUploadSource) {
+      defaultUploadSource.checked = true;
+    }
+    setImageSourceProperty('Uploaded image');
+    if (templateImagePropertyInput) templateImagePropertyInput.value = '';
+    updateImageSourceUI('upload');
+
+    if (openTemplatePickerButton) {
+      openTemplatePickerButton.addEventListener('click', function() {
+        openTemplateModal();
+      });
+    }
+
+    if (templateGrid) {
+      templateGrid.addEventListener('click', function(event) {
+        var target = event.target;
+        var item = target && target.closest ? target.closest('.template-item') : null;
+        if (!item) return;
+        applyTemplateImageSelection(item.getAttribute('data-template-url'), item.getAttribute('data-template-alt'));
+      });
+    }
+
+    if (templateModal) {
+      templateModal.addEventListener('click', function(event) {
+        var target = event.target;
+        if (target && target.hasAttribute && target.hasAttribute('data-close-template-modal')) {
+          closeTemplateModal();
+        }
+      });
+    }
+
+    productSection.addEventListener('change', function(event) {
+      var target = event.target;
+      if (!target || target.name !== ('imageSource-' + sectionId)) return;
+      if (target.value === 'upload') {
+        updateImageSourceUI('upload');
+        setImageSourceProperty('Uploaded image');
+      } else if (target.value === 'template') {
+        updateImageSourceUI('template');
+        setImageSourceProperty('Template image');
+        openTemplateModal();
+      }
+    });
 
     tryLoadFromHiddenInput();
     productSection.addEventListener('change', tryLoadFromHiddenInput);

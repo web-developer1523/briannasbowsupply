@@ -1,0 +1,449 @@
+<div id="ImageCustomizer-{{ section.id }}" class="image-customizer-tool" data-section-id="{{ section.id }}">
+  <div class="image-customizer-tool__layout">
+    <div class="image-customizer-tool__preview">
+      <div class="image-customizer-tool__frame">
+        <div class="image-customizer-tool__corner">IN</div>
+        <canvas id="CustomizerRulerTop-{{ section.id }}" class="image-customizer-tool__ruler image-customizer-tool__ruler--top" width="700" height="34"></canvas>
+        <canvas id="CustomizerRulerLeft-{{ section.id }}" class="image-customizer-tool__ruler image-customizer-tool__ruler--left" width="34" height="500"></canvas>
+        <div class="image-customizer-tool__preview-wrap">
+          <canvas id="CustomizerCanvas-{{ section.id }}" width="700" height="500"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="image-customizer-tool__controls">
+      {% comment %} <div class="image-customizer-tool__source-options">
+        <label><input type="radio" name="customizerSource-{{ section.id }}" value="upload" checked> Upload my image</label>
+        <label><input type="radio" name="customizerSource-{{ section.id }}" value="template"> Choose template</label>
+      </div> {% endcomment %}
+
+      <div id="CustomizerUploadBlock-{{ section.id }}">
+        <label for="CustomizerUploadInput-{{ section.id }}">Image Upload</label>
+        <input id="CustomizerUploadInput-{{ section.id }}" type="file" accept="image/*">
+      </div>
+
+      <button type="button" id="CustomizerOpenTemplatePicker-{{ section.id }}" class="btn image-customizer-tool__template-btn image-customizer-tool__hidden">Open template library</button>
+
+      <div class="image-customizer-tool__scale">
+        <label for="CustomizerScale-{{ section.id }}">
+          Adjust Scale:
+          <span id="CustomizerScaleValue-{{ section.id }}">3.00 X 3.00in</span>
+        </label>
+        <input id="CustomizerScale-{{ section.id }}" type="range" min="0.1" max="4" step="0.01" value="1">
+      </div>
+
+      <div class="image-customizer-tool__row">
+        <span>Size</span>
+        <div id="CustomizerSizes-{{ section.id }}" class="image-customizer-tool__sizes">
+          <label><input type="radio" name="customizerSize-{{ section.id }}" value="3x3" checked> 3x3</label>
+          <label><input type="radio" name="customizerSize-{{ section.id }}" value="4x4"> 4x4</label>
+          <label><input type="radio" name="customizerSize-{{ section.id }}" value="5x5"> 5x5</label>
+          <label><input type="radio" name="customizerSize-{{ section.id }}" value="6x6"> 6x6</label>
+          <label><input type="radio" name="customizerSize-{{ section.id }}" value="7x7"> 7x7</label>
+          <label><input type="radio" name="customizerSize-{{ section.id }}" value="8x8"> 8x8</label>
+          <label><input type="radio" name="customizerSize-{{ section.id }}" value="10x10"> 10x10</label>
+          <label><input type="radio" name="customizerSize-{{ section.id }}" value="12x12"> 12x12</label>
+        </div>
+      </div>
+
+      <div class="image-customizer-tool__row">
+        <label for="CustomizerWidth-{{ section.id }}">Image Width</label>
+        <input id="CustomizerWidth-{{ section.id }}" type="number" min="0.01" step="0.01" value="3.00">
+      </div>
+
+      <div class="image-customizer-tool__row">
+        <label for="CustomizerHeight-{{ section.id }}">Image Height</label>
+        <input id="CustomizerHeight-{{ section.id }}" type="number" min="0.01" step="0.01" value="3.00">
+      </div>
+    </div>
+  </div>
+
+  {% assign design_library_value = shop.metafields.custom.design_library.value %}
+  {% if design_library_value != blank %}
+    <script type="application/json" id="CustomizerTemplateLibrary-{{ section.id }}">
+      [
+        {% if design_library_value.url != blank %}
+          {
+            "url": {{ design_library_value.url | json }},
+            "alt": {{ design_library_value.alt | default: design_library_value.filename | default: 'Template image' | json }}
+          }
+        {% else %}
+          {% for template_file in design_library_value %}
+            {
+              "url": {% if template_file.url != blank %}{{ template_file.url | json }}{% elsif template_file.preview_image %}{{ template_file.preview_image | image_url: width: 1500 | json }}{% else %}""{% endif %},
+              "alt": {{ template_file.alt | default: template_file.filename | default: 'Template image' | json }}
+            }{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        {% endif %}
+      ]
+    </script>
+  {% endif %}
+
+  <div id="CustomizerTemplateModal-{{ section.id }}" class="image-customizer-tool__modal image-customizer-tool__hidden" aria-hidden="true">
+    <div class="image-customizer-tool__modal-backdrop" data-customizer-close-modal></div>
+    <div class="image-customizer-tool__modal-panel" role="dialog" aria-modal="true" aria-label="Template image library">
+      <div class="image-customizer-tool__modal-header">
+        <h3>Choose an image from the library</h3>
+        <button type="button" data-customizer-close-modal aria-label="Close">X</button>
+      </div>
+      <div id="CustomizerTemplateGrid-{{ section.id }}" class="image-customizer-tool__template-grid"></div>
+      <p id="CustomizerTemplateEmpty-{{ section.id }}" class="image-customizer-tool__template-empty image-customizer-tool__hidden">No template images found.</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__layout { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__frame { display: grid; grid-template-columns: 34px 1fr; grid-template-rows: 34px 1fr; border: 1px solid #222; border-radius: 8px; overflow: hidden; background: #f3f3f3; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__corner { background: #111; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; border-right: 1px solid #222; border-bottom: 1px solid #222; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__ruler { background: #f7f7f7; display: block; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__ruler--top { width: 100%; height: 34px; border-bottom: 1px solid #222; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__ruler--left { width: 34px; height: 100%; border-right: 1px solid #222; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__preview-wrap { height: 540px; overflow: hidden; background: #fff; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__preview-wrap canvas { width: 100%; height: 100%; display: block; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__controls { display: grid; gap: 12px; align-content: start; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__source-options { display: flex; gap: 14px; flex-wrap: wrap; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__scale label { font-weight: 700; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__scale input[type="range"] { width: 100%; margin-top: 8px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__row { display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__sizes { display: flex; gap: 10px; flex-wrap: wrap; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__hidden { display: none !important; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-panel { position: relative; width: min(900px, 100%); max-height: 85vh; overflow: auto; background: #fff; border-radius: 10px; padding: 14px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid button { border: 1px solid #ddd; border-radius: 8px; background: #fff; padding: 0; cursor: pointer; overflow: hidden; text-align: left; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid img { width: 100%; height: 130px; object-fit: cover; display: block; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid span { display: block; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 989px) { #ImageCustomizer-{{ section.id }} .image-customizer-tool__layout { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+  (function() {
+    var sectionId = '{{ section.id }}';
+    var root = document.getElementById('ImageCustomizer-' + sectionId);
+    if (!root) return;
+
+    var canvas = document.getElementById('CustomizerCanvas-' + sectionId);
+    var topRulerCanvas = document.getElementById('CustomizerRulerTop-' + sectionId);
+    var leftRulerCanvas = document.getElementById('CustomizerRulerLeft-' + sectionId);
+    var previewWrap = root.querySelector('.image-customizer-tool__preview-wrap');
+    var scaleSlider = document.getElementById('CustomizerScale-' + sectionId);
+    var scaleValue = document.getElementById('CustomizerScaleValue-' + sectionId);
+    var sizeWrap = document.getElementById('CustomizerSizes-' + sectionId);
+    var widthInput = document.getElementById('CustomizerWidth-' + sectionId);
+    var heightInput = document.getElementById('CustomizerHeight-' + sectionId);
+    var uploadBlock = document.getElementById('CustomizerUploadBlock-' + sectionId);
+    var uploadInput = document.getElementById('CustomizerUploadInput-' + sectionId);
+    var sourceRadios = root.querySelectorAll('input[name="customizerSource-' + sectionId + '"]');
+    var openTemplateButton = document.getElementById('CustomizerOpenTemplatePicker-' + sectionId);
+    var templateModal = document.getElementById('CustomizerTemplateModal-' + sectionId);
+    var templateGrid = document.getElementById('CustomizerTemplateGrid-' + sectionId);
+    var templateEmpty = document.getElementById('CustomizerTemplateEmpty-' + sectionId);
+    var templateDataScript = document.getElementById('CustomizerTemplateLibrary-' + sectionId);
+
+    if (!canvas || !topRulerCanvas || !leftRulerCanvas || !previewWrap || !scaleSlider || !sizeWrap || !widthInput || !heightInput) return;
+
+    var ctx = canvas.getContext('2d');
+    var topCtx = topRulerCanvas.getContext('2d');
+    var leftCtx = leftRulerCanvas.getContext('2d');
+    var uploadedImage = null;
+    var imageWidthInches = 3;
+    var imageHeightInches = 3;
+    var imageAspectRatio = 1;
+    var scale = 1;
+    var canvasInches = { width: 3, height: 3 };
+    var activeSizePreset = '3x3';
+    var templateItems = [];
+    var rulerThickness = 34;
+
+    function parseTemplateItems() {
+      if (!templateDataScript) return [];
+      try {
+        var parsed = JSON.parse(templateDataScript.textContent || '[]');
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(function(item) {
+          return item && typeof item.url === 'string' && item.url.trim() !== '';
+        }).map(function(item, i) {
+          return { url: item.url.trim(), alt: item.alt || ('Template ' + (i + 1)) };
+        });
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function syncCanvasToViewport() {
+      var w = Math.max(1, Math.round(previewWrap.clientWidth));
+      var h = Math.max(1, Math.round(previewWrap.clientHeight));
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      if (topRulerCanvas.width !== w || topRulerCanvas.height !== rulerThickness) { topRulerCanvas.width = w; topRulerCanvas.height = rulerThickness; }
+      if (leftRulerCanvas.width !== rulerThickness || leftRulerCanvas.height !== h) { leftRulerCanvas.width = rulerThickness; leftRulerCanvas.height = h; }
+    }
+
+    function getMajorStep(pxPerUnit) {
+      if (pxPerUnit >= 20) return 1;
+      if (pxPerUnit >= 10) return 2;
+      if (pxPerUnit >= 6) return 5;
+      return 10;
+    }
+
+    function drawTopRuler(inches) {
+      var w = topRulerCanvas.width;
+      var h = topRulerCanvas.height;
+      var px = w / Math.max(inches, 0.001);
+      var step = getMajorStep(px);
+      topCtx.clearRect(0, 0, w, h);
+      topCtx.fillStyle = '#f7f7f7';
+      topCtx.fillRect(0, 0, w, h);
+      topCtx.strokeStyle = '#111';
+      topCtx.fillStyle = '#111';
+      topCtx.font = '12px Arial, sans-serif';
+      topCtx.textAlign = 'center';
+      topCtx.textBaseline = 'top';
+      for (var i = 0; i <= Math.ceil(inches); i++) {
+        var x = Math.round(i * px) + 0.5;
+        if (x < 0 || x > w + 1) continue;
+        var major = i % step === 0;
+        topCtx.beginPath();
+        topCtx.moveTo(x, h);
+        topCtx.lineTo(x, h - (major ? 12 : 7));
+        topCtx.stroke();
+        if (major && i > 0) topCtx.fillText(String(i), Math.max(8, Math.min(w - 8, x)), 3);
+      }
+    }
+
+    function drawLeftRuler(inches) {
+      var w = leftRulerCanvas.width;
+      var h = leftRulerCanvas.height;
+      var px = h / Math.max(inches, 0.001);
+      var step = getMajorStep(px);
+      leftCtx.clearRect(0, 0, w, h);
+      leftCtx.fillStyle = '#f7f7f7';
+      leftCtx.fillRect(0, 0, w, h);
+      leftCtx.strokeStyle = '#111';
+      leftCtx.fillStyle = '#111';
+      leftCtx.font = '12px Arial, sans-serif';
+      leftCtx.textAlign = 'left';
+      leftCtx.textBaseline = 'middle';
+      for (var i = 0; i <= Math.ceil(inches); i++) {
+        var y = Math.round(i * px) + 0.5;
+        if (y < 0 || y > h + 1) continue;
+        var major = i % step === 0;
+        leftCtx.beginPath();
+        leftCtx.moveTo(w, y);
+        leftCtx.lineTo(w - (major ? 12 : 7), y);
+        leftCtx.stroke();
+        if (major && i > 0) leftCtx.fillText(String(i), 3, Math.max(8, Math.min(h - 8, y)));
+      }
+    }
+
+    function syncScaleOutputs() {
+      var w = imageWidthInches * scale;
+      var h = imageHeightInches * scale;
+      scaleValue.textContent = w.toFixed(2) + ' X ' + h.toFixed(2) + 'in';
+      widthInput.value = w.toFixed(2);
+      heightInput.value = h.toFixed(2);
+    }
+
+    function drawImage() {
+      syncCanvasToViewport();
+      drawTopRuler(canvasInches.width);
+      drawLeftRuler(canvasInches.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!uploadedImage) return;
+
+      var pxPerInch = Math.min(
+        canvas.width / Math.max(canvasInches.width, 0.001),
+        canvas.height / Math.max(canvasInches.height, 0.001)
+      );
+      var drawW = Math.max(1, Math.round(imageWidthInches * scale * pxPerInch));
+      var drawH = Math.max(1, Math.round(imageHeightInches * scale * pxPerInch));
+
+      var tileCanvas = document.createElement('canvas');
+      tileCanvas.width = drawW;
+      tileCanvas.height = drawH;
+      var tileCtx = tileCanvas.getContext('2d');
+      tileCtx.imageSmoothingEnabled = true;
+      tileCtx.drawImage(uploadedImage, 0, 0, drawW, drawH);
+
+      var pattern = ctx.createPattern(tileCanvas, 'repeat');
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function applyCanvasSizePreset(value) {
+      if (!value || value === activeSizePreset) return;
+      var parts = value.split('x');
+      var w = parseFloat(parts[0]);
+      var h = parseFloat(parts[1]);
+      if (!isFinite(w) || !isFinite(h) || w <= 0 || h <= 0) return;
+      canvasInches = { width: w, height: h };
+      activeSizePreset = value;
+      imageWidthInches = w;
+      imageHeightInches = imageWidthInches * imageAspectRatio;
+      syncScaleOutputs();
+      drawImage();
+    }
+
+    function loadImageFromUrl(url) {
+      if (!url) return;
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        uploadedImage = img;
+        imageAspectRatio = img.naturalHeight > 0 && img.naturalWidth > 0 ? img.naturalHeight / img.naturalWidth : 1;
+        imageHeightInches = imageWidthInches * imageAspectRatio;
+        scale = 1;
+        scaleSlider.value = '1';
+        syncScaleOutputs();
+        drawImage();
+      };
+      img.onerror = function() {};
+      img.src = url;
+    }
+
+    function loadImageFromFile(file) {
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        if (evt && evt.target && evt.target.result) loadImageFromUrl(evt.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateSourceUI(mode) {
+      var useTemplate = mode === 'template';
+      if (uploadBlock) uploadBlock.classList.toggle('image-customizer-tool__hidden', useTemplate);
+      if (openTemplateButton) openTemplateButton.classList.toggle('image-customizer-tool__hidden', !useTemplate);
+      if (!useTemplate && templateModal) {
+        templateModal.classList.add('image-customizer-tool__hidden');
+        templateModal.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    function openTemplateModal() {
+      if (!templateModal) return;
+      templateModal.classList.remove('image-customizer-tool__hidden');
+      templateModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeTemplateModal() {
+      if (!templateModal) return;
+      templateModal.classList.add('image-customizer-tool__hidden');
+      templateModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function renderTemplateGrid() {
+      if (!templateGrid || !templateEmpty) return;
+      templateGrid.innerHTML = '';
+      if (!templateItems.length) {
+        templateEmpty.classList.remove('image-customizer-tool__hidden');
+        return;
+      }
+      templateEmpty.classList.add('image-customizer-tool__hidden');
+      for (var i = 0; i < templateItems.length; i++) {
+        var t = templateItems[i];
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('data-url', t.url);
+        var img = document.createElement('img');
+        img.src = t.url;
+        img.alt = t.alt;
+        img.loading = 'lazy';
+        var cap = document.createElement('span');
+        cap.textContent = t.alt;
+        btn.appendChild(img);
+        btn.appendChild(cap);
+        templateGrid.appendChild(btn);
+      }
+    }
+
+    templateItems = parseTemplateItems();
+    renderTemplateGrid();
+    updateSourceUI('upload');
+    applyCanvasSizePreset('3x3');
+    syncScaleOutputs();
+    drawImage();
+
+    if (uploadInput) {
+      uploadInput.addEventListener('change', function(e) {
+        if (e.target && e.target.files && e.target.files[0]) loadImageFromFile(e.target.files[0]);
+      });
+    }
+
+    scaleSlider.addEventListener('input', function() {
+      scale = parseFloat(scaleSlider.value) || 1;
+      syncScaleOutputs();
+      drawImage();
+    });
+
+    widthInput.addEventListener('input', function() {
+      var w = parseFloat(widthInput.value);
+      if (!isFinite(w) || w <= 0) return;
+      imageWidthInches = w / Math.max(scale, 0.001);
+      imageHeightInches = imageWidthInches * imageAspectRatio;
+      syncScaleOutputs();
+      drawImage();
+    });
+
+    heightInput.addEventListener('input', function() {
+      var h = parseFloat(heightInput.value);
+      if (!isFinite(h) || h <= 0) return;
+      imageHeightInches = h / Math.max(scale, 0.001);
+      imageWidthInches = imageHeightInches / Math.max(imageAspectRatio, 0.001);
+      syncScaleOutputs();
+      drawImage();
+    });
+
+    sizeWrap.addEventListener('change', function(e) {
+      var t = e.target;
+      if (!t || t.type !== 'radio' || !t.value) return;
+      applyCanvasSizePreset(t.value);
+    });
+
+    for (var r = 0; r < sourceRadios.length; r++) {
+      sourceRadios[r].addEventListener('change', function(e) {
+        if (!e.target) return;
+        updateSourceUI(e.target.value);
+        if (e.target.value === 'template') openTemplateModal();
+      });
+    }
+
+    if (openTemplateButton) {
+      openTemplateButton.addEventListener('click', function() {
+        openTemplateModal();
+      });
+    }
+
+    if (templateModal) {
+      templateModal.addEventListener('click', function(e) {
+        var target = e.target;
+        if (!target) return;
+        if (target.hasAttribute('data-customizer-close-modal')) {
+          closeTemplateModal();
+          return;
+        }
+        var item = target.closest ? target.closest('button[data-url]') : null;
+        if (item) {
+          loadImageFromUrl(item.getAttribute('data-url'));
+          closeTemplateModal();
+        }
+      });
+    }
+
+    window.addEventListener('resize', drawImage);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Image customizer tool",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Image customizer tool"
+    }
+  ]
+}
+{% endschema %}
