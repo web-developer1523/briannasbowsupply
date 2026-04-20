@@ -1,0 +1,284 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "current": {
+    "color_body_bg": "#fdfdfd",
+    "color_body_text": "#621329",
+    "color_primary_color": "#d77cae",
+    "color_primary_button_text": "#fffdfd",
+    "color_sale_badge": "#c3365d",
+    "color_borders": "#778d33",
+    "color_form": "#f4f4f4",
+    "color_image_overlay_text": "#f8f8f8",
+    "color_image_overlay": "#c3365d",
+    "image_overlay_opacity": 35,
+    "type_header_font": "baskerville_no_2_n4",
+    "type_header_base_size": "28px",
+    "type_base_font": "baskerville_no_2_n4",
+    "type_base_size": "15px",
+    "type_button_base_size": "14px",
+    "type_navigation_base_size": "16px",
+    "cart_enable_ajax": true,
+    "show_breadcrumb_nav": true,
+    "share_image": "shopify://shop_images/Brianna_s_Bow_Supply_Shoppe_1_ca6458bd-468d-4bab-aad7-a8bfb9cc604c.png",
+    "social_facebook_link": "",
+    "social_twitter_link": "",
+    "social_pinterest_link": "",
+    "social_instagram_link": "",
+    "social_snapchat_link": "",
+    "social_google_plus_link": "",
+    "social_tumblr_link": "",
+    "social_youtube_link": "",
+    "social_vimeo_link": "",
+    "social_fancy_link": "",
+    "main_blog": "",
+    "share_facebook": true,
+    "share_twitter": false,
+    "share_pinterest": false,
+    "favicon": "",
+    "checkout_header_image": "",
+    "checkout_logo_image": "shopify://shop_images/Brianna_s_Bow_Supply_Shoppe_1_ca6458bd-468d-4bab-aad7-a8bfb9cc604c.png",
+    "checkout_logo_position": "center",
+    "checkout_logo_size": "large",
+    "checkout_body_background_image": "",
+    "checkout_body_background_color": "#fff",
+    "checkout_input_background_color_mode": "white",
+    "checkout_sidebar_background_image": "",
+    "checkout_sidebar_background_color": "#fafafa",
+    "checkout_heading_font": "Glegoo",
+    "checkout_body_font": "Glegoo",
+    "checkout_accent_color": "#d75cc1",
+    "checkout_button_color": "#cdaccd",
+    "checkout_error_color": "#e32c2b",
+    "sections": {
+      "featured-products": {
+        "type": "featured-products",
+        "settings": {
+          "title": "New Arrivals",
+          "home_page_featured_products": "brittany-frost-bullet",
+          "home_featured_products_row_num": 10
+        }
+      },
+      "footer": {
+        "type": "footer",
+        "blocks": {
+          "1558142359574": {
+            "type": "text",
+            "settings": {
+              "title": "Contact us",
+              "richtext": "<p>customercare.bbss@gmail.com</p>"
+            }
+          }
+        },
+        "block_order": [
+          "1558142359574"
+        ],
+        "settings": {
+          "show_payment_icons": true
+        }
+      },
+      "header": {
+        "type": "header",
+        "settings": {
+          "logo": "shopify://shop_images/Brianna_s_Bow_Supply_Shoppe_1_ca6458bd-468d-4bab-aad7-a8bfb9cc604c.png",
+          "logo_max_width": "600",
+          "show_announcement": true,
+          "home_page_only": false,
+          "announcement_text": "Processing times are 4-5 business days for print-on-demand and custom fabric orders. There is a 1-2 business day processing time for custom fabric with a $5 rush fee per yard. TAT starts the next day after placing your order. Please note that weekends and holidays do not count as business days. Enjoy FREE SHIPPING on all orders of $150 or more! For inquiries, please email us at customercare.bbss@gmail.com.",
+          "announcement_link": "",
+          "tagline": ""
+        }
+      },
+      "sidebar": {
+        "type": "sidebar",
+        "settings": {
+          "main_menu_link_list": "main-menu"
+        }
+      },
+      "collection-template": {
+        "type": "collection-template",
+        "settings": {
+          "vendor_show": false,
+          "collection_sort_enable": true,
+          "collection_tag_enable": false
+        }
+      },
+      "16593994144cde2d2e": {
+        "type": "featured-products",
+        "settings": {
+          "title": "Featured collection",
+          "home_page_featured_products": "custom",
+          "home_featured_products_row_num": 10
+        }
+      },
+      "product-template": {
+        "type": "product-template",
+        "custom_css": [
+          "#more-payment-options-link {position: relative;}"
+        ],
+        "settings": {
+          "product_quantity_enable": false,
+          "vendor_show": false,
+          "social_sharing_products": true,
+          "product_description_position": "below",
+          "show_extra_tab": false,
+          "extra_tab_content": "",
+          "product_image_zoom_type": "lightbox",
+          "enable_payment_button": true,
+          "add_to_cart_width": "regular"
+        }
+      },
+      "sezzle-widget": {
+        "type": "sezzle-widget",
+        "settings": {
+          "show-sezzle-widget": true,
+          "color": "inherit",
+          "font-size": 14,
+          "font-family": "inherit",
+          "product-page-alignment": "auto",
+          "cart-page-alignment": "auto"
+        }
+      }
+    },
+    "content_for_index": [
+      "16593994144cde2d2e"
+    ],
+    "blocks": {
+      "15683396631634586217": {
+        "type": "shopify://apps/inbox/blocks/chat/841fc607-4181-4ad1-842d-e24d7f8bad6b",
+        "disabled": true,
+        "settings": {
+          "button_color": "#202a36",
+          "button_icon": "chat_bubble",
+          "button_text": "no_text",
+          "button_horizontal_position": "bottom_right",
+          "button_vertical_position": "lowest",
+          "greeting_message": "👋 Hi, message us with any questions. We're happy to help!"
+        }
+      },
+      "13347113423253351200": {
+        "type": "shopify://apps/gang-sheet-builder/blocks/antigroDesigner/06545548-f5fc-4e9c-8f9f-f4f96aeb6b40",
+        "disabled": false,
+        "settings": {
+          "advancedConfig": "",
+          "legacyThemeConfig": ""
+        }
+      }
+    }
+  },
+  "presets": {
+    "Light": {
+      "color_body_bg": "#ffffff",
+      "color_body_text": "#333333",
+      "color_primary_color": "#333333",
+      "color_primary_button_text": "#ffffff",
+      "color_sale_badge": "#c8493f",
+      "color_borders": "#e8e8e8",
+      "color_form": "#f4f4f4",
+      "color_image_overlay_text": "#fff",
+      "color_image_overlay": "#333333",
+      "image_overlay_opacity": "25",
+      "type_header_font": "times_new_roman_n4",
+      "type_header_base_size": "28px",
+      "type_base_font": "helvetica_n4",
+      "type_base_size": "15px",
+      "type_button_base_size": "14px",
+      "type_navigation_base_size": "16px",
+      "show_breadcrumb_nav": true,
+      "share_facebook": true,
+      "share_twitter": true,
+      "share_pinterest": true,
+      "sections": {
+        "featured-products": {
+          "type": "featured-products",
+          "settings": {
+            "home_page_featured_products": "frontpage"
+          }
+        },
+        "featured-content": {
+          "type": "featured-content",
+          "settings": {}
+        },
+        "footer": {
+          "type": "footer",
+          "blocks": {
+            "footer-0": {
+              "type": "menu",
+              "settings": {
+                "menu": "footer"
+              }
+            }
+          },
+          "block_order": [
+            "footer-0"
+          ],
+          "settings": {}
+        }
+      },
+      "content_for_index": [
+        "featured-products",
+        "featured-content"
+      ]
+    },
+    "Beauty": {
+      "color_body_bg": "#f7f7f7",
+      "color_body_text": "#3c4049",
+      "color_primary_color": "#d97c76",
+      "color_primary_button_text": "#ffffff",
+      "color_sale_badge": "#d97c76",
+      "color_borders": "#d7d8d2",
+      "color_form": "#ffffff",
+      "color_image_overlay_text": "#fff",
+      "color_image_overlay": "#3c4049",
+      "image_overlay_opacity": "25",
+      "type_header_font": "pt_serif_n7",
+      "type_header_base_size": "28px",
+      "type_base_font": "pt_serif_n4",
+      "type_base_size": "16px",
+      "type_button_base_size": "12px",
+      "type_navigation_base_size": "16px",
+      "show_breadcrumb_nav": true,
+      "share_facebook": true,
+      "share_twitter": true,
+      "share_pinterest": true,
+      "sections": {
+        "featured-products": {
+          "type": "featured-products",
+          "settings": {
+            "home_page_featured_products": "frontpage"
+          }
+        },
+        "featured-content": {
+          "type": "featured-content",
+          "settings": {}
+        },
+        "footer": {
+          "type": "footer",
+          "blocks": {
+            "footer-0": {
+              "type": "menu",
+              "settings": {
+                "menu": "footer"
+              }
+            }
+          },
+          "block_order": [
+            "footer-0"
+          ],
+          "settings": {}
+        }
+      },
+      "content_for_index": [
+        "featured-products",
+        "featured-content"
+      ]
+    }
+  }
+}
