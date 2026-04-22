@@ -190,7 +190,16 @@
                 <h3 class="template-modal__title">Template library</h3>
                 <button type="button" class="template-modal__close" data-close-template-modal aria-label="Close">X</button>
               </div>
+              <div class="template-modal__toolbar">
+                <label class="visually-hidden" for="TemplateSearch-{{ section.id }}">Search templates</label>
+                <input type="search" id="TemplateSearch-{{ section.id }}" class="template-modal__search" placeholder="Search..." autocomplete="off">
+              </div>
               <div class="template-modal__grid" id="TemplateGrid-{{ section.id }}"></div>
+              <div class="template-modal__pagination hidden" id="TemplatePagination-{{ section.id }}">
+                <button type="button" class="btn template-modal__page-btn" id="TemplatePrev-{{ section.id }}">Previous</button>
+                <span class="template-modal__page-info" id="TemplatePageInfo-{{ section.id }}"></span>
+                <button type="button" class="btn template-modal__page-btn" id="TemplateNext-{{ section.id }}">Next</button>
+              </div>
               <p class="template-modal__empty hidden" id="TemplateEmpty-{{ section.id }}">No template images found.</p>
             </div>
           </div>
@@ -477,7 +486,7 @@
 
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__panel {
     position: relative;
-    width: min(900px, 100%);
+    width: min(960px, 100%);
     max-height: 85vh;
     overflow: auto;
     background: #fff;
@@ -525,7 +534,7 @@
 
   #ProductSection[data-section-id="{{ section.id }}"] .template-item img {
     width: 100%;
-    height: 130px;
+    height: 150px;
     object-fit: cover;
     display: block;
   }
@@ -544,6 +553,42 @@
     margin: 4px 0 0;
     font-size: 14px;
     color: #555;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__toolbar {
+    margin-bottom: 12px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__search {
+    width: 97%;
+    max-width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__page-info {
+    font-size: 14px;
+    color: #444;
+    min-width: 140px;
+    text-align: center;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__page-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 </style>
 
@@ -572,6 +617,11 @@
     var templateModal = document.getElementById('TemplateModal-' + sectionId);
     var templateGrid = document.getElementById('TemplateGrid-' + sectionId);
     var templateEmpty = document.getElementById('TemplateEmpty-' + sectionId);
+    var templateSearch = document.getElementById('TemplateSearch-' + sectionId);
+    var templatePagination = document.getElementById('TemplatePagination-' + sectionId);
+    var templatePrev = document.getElementById('TemplatePrev-' + sectionId);
+    var templateNext = document.getElementById('TemplateNext-' + sectionId);
+    var templatePageInfo = document.getElementById('TemplatePageInfo-' + sectionId);
     var imageSourcePropertyInput = document.getElementById('ImageSource-' + sectionId);
     var templateImagePropertyInput = document.getElementById('TemplateImage-' + sectionId);
     var templateLibraryScript = document.getElementById('TemplateLibraryJson-' + sectionId);
@@ -593,6 +643,9 @@
     var activeSizePreset = '';
     var templateItems = [];
     var canonicalImageField = null;
+    var TEMPLATE_PAGE_SIZE = 15;
+    var templateCurrentPage = 1;
+    var templateSearchTimer = null;
 
     function updateScaleValueLabel() {
       var adjustedWidth = imageWidthInches * scale;
@@ -628,8 +681,27 @@
 
     function openTemplateModal() {
       if (!templateModal) return;
+      templateCurrentPage = 1;
+      if (templateSearch) templateSearch.value = '';
+      renderTemplateGrid();
       templateModal.classList.remove('hidden');
       templateModal.setAttribute('aria-hidden', 'false');
+      if (templateSearch) {
+        try {
+          templateSearch.focus();
+        } catch (e) {
+        }
+      }
+    }
+
+    function getFilteredTemplateItems() {
+      var q = templateSearch && templateSearch.value ? templateSearch.value.trim().toLowerCase() : '';
+      if (!q) return templateItems.slice();
+      return templateItems.filter(function(t) {
+        var alt = (t.alt || '').toLowerCase();
+        var url = (t.url || '').toLowerCase();
+        return alt.indexOf(q) !== -1 || url.indexOf(q) !== -1;
+      });
     }
 
     function renderTemplateGrid() {
@@ -637,15 +709,32 @@
       templateGrid.innerHTML = '';
 
       if (!templateItems.length) {
+        templateEmpty.textContent = 'No template images found.';
         templateEmpty.classList.remove('hidden');
+        if (templatePagination) templatePagination.classList.add('hidden');
+        return;
+      }
+
+      var filtered = getFilteredTemplateItems();
+      if (!filtered.length) {
+        templateEmpty.textContent = 'No templates match your search.';
+        templateEmpty.classList.remove('hidden');
+        if (templatePagination) templatePagination.classList.add('hidden');
         return;
       }
 
       templateEmpty.classList.add('hidden');
 
+      var totalPages = Math.max(1, Math.ceil(filtered.length / TEMPLATE_PAGE_SIZE));
+      if (templateCurrentPage > totalPages) templateCurrentPage = totalPages;
+      if (templateCurrentPage < 1) templateCurrentPage = 1;
+
+      var start = (templateCurrentPage - 1) * TEMPLATE_PAGE_SIZE;
+      var pageItems = filtered.slice(start, start + TEMPLATE_PAGE_SIZE);
+
       var i;
-      for (i = 0; i < templateItems.length; i++) {
-        var template = templateItems[i];
+      for (i = 0; i < pageItems.length; i++) {
+        var template = pageItems[i];
         var button = document.createElement('button');
         button.type = 'button';
         button.className = 'template-item';
@@ -663,6 +752,17 @@
         button.appendChild(img);
         {% comment %} button.appendChild(caption); {% endcomment %}
         templateGrid.appendChild(button);
+      }
+
+      if (templatePagination && templatePageInfo && templatePrev && templateNext) {
+        if (totalPages > 1) {
+          templatePagination.classList.remove('hidden');
+          templatePageInfo.textContent = 'Page ' + templateCurrentPage + ' of ' + totalPages + ' (' + filtered.length + ' images)';
+          templatePrev.disabled = templateCurrentPage <= 1;
+          templateNext.disabled = templateCurrentPage >= totalPages;
+        } else {
+          templatePagination.classList.add('hidden');
+        }
       }
     }
 
@@ -710,7 +810,7 @@
       setImageSourceProperty('Template image');
       if (templateImagePropertyInput) templateImagePropertyInput.value = altText || url;
       {% comment %} setImageUrlOnField(url);
-      loadImageFromUrl(url); {% endcomment %}
+      loadImageFromUrl(url);  {% endcomment %}
       closeTemplateModal();
     }
 
@@ -1025,6 +1125,36 @@
     if (openTemplatePickerButton) {
       openTemplatePickerButton.addEventListener('click', function() {
         openTemplateModal();
+      });
+    }
+
+    if (templateSearch) {
+      templateSearch.addEventListener('input', function() {
+        if (templateSearchTimer) clearTimeout(templateSearchTimer);
+        templateSearchTimer = setTimeout(function() {
+          templateCurrentPage = 1;
+          renderTemplateGrid();
+        }, 250);
+      });
+    }
+
+    if (templatePrev) {
+      templatePrev.addEventListener('click', function() {
+        if (templateCurrentPage > 1) {
+          templateCurrentPage--;
+          renderTemplateGrid();
+        }
+      });
+    }
+
+    if (templateNext) {
+      templateNext.addEventListener('click', function() {
+        var filtered = getFilteredTemplateItems();
+        var totalPages = Math.max(1, Math.ceil(filtered.length / TEMPLATE_PAGE_SIZE));
+        if (templateCurrentPage < totalPages) {
+          templateCurrentPage++;
+          renderTemplateGrid();
+        }
       });
     }
 

@@ -90,7 +90,16 @@
         <h3>Template library</h3>
         <button type="button" data-customizer-close-modal aria-label="Close">X</button>
       </div>
+      <div class="image-customizer-tool__modal-toolbar">
+        <label class="visually-hidden" for="CustomizerTemplateSearch-{{ section.id }}">Search templates</label>
+        <input type="search" id="CustomizerTemplateSearch-{{ section.id }}" class="image-customizer-tool__modal-search" placeholder="Search..." autocomplete="off">
+      </div>
       <div id="CustomizerTemplateGrid-{{ section.id }}" class="image-customizer-tool__template-grid"></div>
+      <div id="CustomizerTemplatePagination-{{ section.id }}" class="image-customizer-tool__modal-pagination image-customizer-tool__hidden">
+        <button type="button" class="btn image-customizer-tool__page-btn" id="CustomizerTemplatePrev-{{ section.id }}">Previous</button>
+        <span class="image-customizer-tool__page-info" id="CustomizerTemplatePageInfo-{{ section.id }}"></span>
+        <button type="button" class="btn image-customizer-tool__page-btn" id="CustomizerTemplateNext-{{ section.id }}">Next</button>
+      </div>
       <p id="CustomizerTemplateEmpty-{{ section.id }}" class="image-customizer-tool__template-empty image-customizer-tool__hidden">No template images found.</p>
     </div>
   </div>
@@ -117,12 +126,28 @@
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__hidden { display: none !important; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
-  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-panel { position: relative; width: min(900px, 100%); max-height: 85vh; overflow: auto; background: #fff; border-radius: 10px; padding: 14px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-panel { position: relative; width: min(960px, 100%); max-height: 85vh; overflow: auto; background: #fff; border-radius: 10px; padding: 14px; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid button { border: 1px solid #ddd; border-radius: 8px; background: #fff; padding: 0; cursor: pointer; overflow: hidden; text-align: left; }
-  #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid img { width: 100%; height: 130px; object-fit: cover; display: block; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid img { width: 100%; height: 150px; object-fit: cover; display: block; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid span { display: block; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-toolbar { margin-bottom: 10px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-search { width: 97%; max-width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-pagination { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid #eee; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__page-info { font-size: 14px; color: #444; min-width: 140px; text-align: center; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  #ImageCustomizer-{{ section.id }} .visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
   @media (max-width: 989px) { #ImageCustomizer-{{ section.id }} .image-customizer-tool__layout { grid-template-columns: 1fr; } }
 </style>
 
@@ -148,6 +173,11 @@
     var templateModal = document.getElementById('CustomizerTemplateModal-' + sectionId);
     var templateGrid = document.getElementById('CustomizerTemplateGrid-' + sectionId);
     var templateEmpty = document.getElementById('CustomizerTemplateEmpty-' + sectionId);
+    var templateSearch = document.getElementById('CustomizerTemplateSearch-' + sectionId);
+    var templatePagination = document.getElementById('CustomizerTemplatePagination-' + sectionId);
+    var templatePrev = document.getElementById('CustomizerTemplatePrev-' + sectionId);
+    var templateNext = document.getElementById('CustomizerTemplateNext-' + sectionId);
+    var templatePageInfo = document.getElementById('CustomizerTemplatePageInfo-' + sectionId);
     var templateDataScript = document.getElementById('CustomizerTemplateLibrary-' + sectionId);
 
     if (!canvas || !topRulerCanvas || !leftRulerCanvas || !previewWrap || !scaleSlider || !sizeWrap || !widthInput || !heightInput) return;
@@ -164,6 +194,9 @@
     var activeSizePreset = '3x3';
     var templateItems = [];
     var rulerThickness = 34;
+    var TEMPLATE_PAGE_SIZE = 15;
+    var templateCurrentPage = 1;
+    var templateSearchTimer = null;
 
     function parseTemplateItems() {
       if (!templateDataScript) return [];
@@ -331,8 +364,17 @@
 
     function openTemplateModal() {
       if (!templateModal) return;
+      templateCurrentPage = 1;
+      if (templateSearch) templateSearch.value = '';
+      renderTemplateGrid();
       templateModal.classList.remove('image-customizer-tool__hidden');
       templateModal.setAttribute('aria-hidden', 'false');
+      if (templateSearch) {
+        try {
+          templateSearch.focus();
+        } catch (e) {
+        }
+      }
     }
 
     function closeTemplateModal() {
@@ -341,16 +383,40 @@
       templateModal.setAttribute('aria-hidden', 'true');
     }
 
+    function getFilteredTemplateItems() {
+      var q = templateSearch && templateSearch.value ? templateSearch.value.trim().toLowerCase() : '';
+      if (!q) return templateItems.slice();
+      return templateItems.filter(function(t) {
+        var alt = (t.alt || '').toLowerCase();
+        var url = (t.url || '').toLowerCase();
+        return alt.indexOf(q) !== -1 || url.indexOf(q) !== -1;
+      });
+    }
+
     function renderTemplateGrid() {
       if (!templateGrid || !templateEmpty) return;
       templateGrid.innerHTML = '';
       if (!templateItems.length) {
+        templateEmpty.textContent = 'No template images found.';
         templateEmpty.classList.remove('image-customizer-tool__hidden');
+        if (templatePagination) templatePagination.classList.add('image-customizer-tool__hidden');
+        return;
+      }
+      var filtered = getFilteredTemplateItems();
+      if (!filtered.length) {
+        templateEmpty.textContent = 'No templates match your search.';
+        templateEmpty.classList.remove('image-customizer-tool__hidden');
+        if (templatePagination) templatePagination.classList.add('image-customizer-tool__hidden');
         return;
       }
       templateEmpty.classList.add('image-customizer-tool__hidden');
-      for (var i = 0; i < templateItems.length; i++) {
-        var t = templateItems[i];
+      var totalPages = Math.max(1, Math.ceil(filtered.length / TEMPLATE_PAGE_SIZE));
+      if (templateCurrentPage > totalPages) templateCurrentPage = totalPages;
+      if (templateCurrentPage < 1) templateCurrentPage = 1;
+      var start = (templateCurrentPage - 1) * TEMPLATE_PAGE_SIZE;
+      var pageItems = filtered.slice(start, start + TEMPLATE_PAGE_SIZE);
+      for (var i = 0; i < pageItems.length; i++) {
+        var t = pageItems[i];
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.setAttribute('data-url', t.url);
@@ -363,6 +429,16 @@
         btn.appendChild(img);
         {% comment %} btn.appendChild(cap); {% endcomment %}
         templateGrid.appendChild(btn);
+      }
+      if (templatePagination && templatePageInfo && templatePrev && templateNext) {
+        if (totalPages > 1) {
+          templatePagination.classList.remove('image-customizer-tool__hidden');
+          templatePageInfo.textContent = 'Page ' + templateCurrentPage + ' of ' + totalPages + ' (' + filtered.length + ' images)';
+          templatePrev.disabled = templateCurrentPage <= 1;
+          templateNext.disabled = templateCurrentPage >= totalPages;
+        } else {
+          templatePagination.classList.add('image-customizer-tool__hidden');
+        }
       }
     }
 
@@ -423,6 +499,36 @@
       });
     }
 
+    if (templateSearch) {
+      templateSearch.addEventListener('input', function() {
+        if (templateSearchTimer) clearTimeout(templateSearchTimer);
+        templateSearchTimer = setTimeout(function() {
+          templateCurrentPage = 1;
+          renderTemplateGrid();
+        }, 250);
+      });
+    }
+
+    if (templatePrev) {
+      templatePrev.addEventListener('click', function() {
+        if (templateCurrentPage > 1) {
+          templateCurrentPage--;
+          renderTemplateGrid();
+        }
+      });
+    }
+
+    if (templateNext) {
+      templateNext.addEventListener('click', function() {
+        var filtered = getFilteredTemplateItems();
+        var totalPages = Math.max(1, Math.ceil(filtered.length / TEMPLATE_PAGE_SIZE));
+        if (templateCurrentPage < totalPages) {
+          templateCurrentPage++;
+          renderTemplateGrid();
+        }
+      });
+    }
+
     if (templateModal) {
       templateModal.addEventListener('click', function(e) {
         var target = e.target;
@@ -433,7 +539,7 @@
         }
         var item = target.closest ? target.closest('button[data-url]') : null;
         if (item) {
-          {% comment %} loadImageFromUrl(item.getAttribute('data-url')); {% endcomment %}
+           {% comment %} loadImageFromUrl(item.getAttribute('data-url'));  {% endcomment %}
           closeTemplateModal();
         }
       });
