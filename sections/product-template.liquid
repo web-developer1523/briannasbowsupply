@@ -501,10 +501,15 @@
     gap: 10px;
     margin-bottom: 12px;
   }
-
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__header button {
+    background: #fff;
+    border: none;
+    font-size: 16px;
+    color: #d77cae;
+  }
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__title {
     margin: 0;
-    font-size: 18px;
+    {% comment %} font-size: 18px; {% endcomment %}
   }
 
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__close {
@@ -563,11 +568,14 @@
     width: 97%;
     max-width: 100%;
     padding: 10px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid #000;
     border-radius: 6px;
     font-size: 15px;
+    background: transparent;
   }
-
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__search::placeholder {
+    color: #621329;
+  }
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__pagination {
     display: flex;
     align-items: center;
@@ -576,7 +584,7 @@
     flex-wrap: wrap;
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #000;
   }
 
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__page-info {

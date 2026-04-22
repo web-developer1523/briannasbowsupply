@@ -106,8 +106,22 @@
 </div>
 
 <style>
-  .image-customizer-tool__modal-header h3 {
+#ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-header button {
+    background: #fff;
+    border: none;
+    font-size: 16px;
+    color: #d77cae;
+}
+#ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-header h3 {
     margin-bottom: 0px;
+    color: #621329;
+}
+#ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-search::placeholder {
+  color: #621329;
+}
+#ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-search button {
+  color: #d77cae;
+  border:none;
 }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__layout { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__frame { display: grid; grid-template-columns: 28px 1fr; grid-template-rows: 28px 1fr; border: 1px solid #222; overflow: hidden; background: #f3f3f3; }
@@ -133,10 +147,10 @@
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid img { width: 100%; height: 150px; object-fit: cover; display: block; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__template-grid span { display: block; padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-toolbar { margin-bottom: 10px; }
-  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-search { width: 97%; max-width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
-  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-pagination { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid #eee; }
-  #ImageCustomizer-{{ section.id }} .image-customizer-tool__page-info { font-size: 14px; color: #444; min-width: 140px; text-align: center; }
-  #ImageCustomizer-{{ section.id }} .image-customizer-tool__page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-search { width: 97%; max-width: 100%; padding: 10px 12px; border: 1px solid #000; border-radius: 6px; font-size: 15px; background: transparent;}
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__modal-pagination { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid #621329; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__page-info { font-size: 14px; color: #000; min-width: 150px; text-align: center; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   #ImageCustomizer-{{ section.id }} .visually-hidden {
     position: absolute !important;
     width: 1px !important;
