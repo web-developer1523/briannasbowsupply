@@ -3,7 +3,7 @@
 
   <meta itemprop="name" content="{{ product.title }}">
   <meta itemprop="url" content="{{ shop.url }}{{ product.url }}">
-  <meta itemprop="image" content="{{ product.featured_image.src | img_url: 'grande' }}">
+  <meta itemprop="image" content="{{ product.featured_image.src | image_url }}">
 
   {% comment %}
     Get first variant in stock, or deep linked one
@@ -80,23 +80,20 @@
                 {% endif %}
               {% endfor %}
             </select> {% endcomment %}
-          
-<div id="uploadery-container"></div>
+
+
 
             <div class="image-source-controls">
-              {% comment %} <div class="image-source-options">
+              <div class="image-source-options">
                 <label><input type="radio" name="imageSource-{{ section.id }}" value="upload" checked> Upload my image</label>
                 <label><input type="radio" name="imageSource-{{ section.id }}" value="template"> Choose template</label>
-              </div> {% endcomment %}
-              <div class="image-source-options">
-                <label><input type="radio" checked> Upload my image</label>
-                <label><input type="radio" > Choose template</label>
               </div>
+            
               <button type="button" id="OpenTemplatePicker-{{ section.id }}" class="btn image-source-button">Open template library</button>
               <input type="hidden" id="ImageSource-{{ section.id }}" name="properties[Image_Source]" value="Uploaded image">
               <input type="hidden" id="TemplateImage-{{ section.id }}" name="properties[Template_Image]" value="">
             </div>
-
+            <div id="uploadery-container"></div>
             <div class="custom-controls card">
               {% comment %} <h2 class="heading">Controls</h2> {% endcomment %}
               <div class="controls">
@@ -161,23 +158,27 @@
 
           {% endform %}
 
-          {% assign design_library_value = shop.metafields.custom.design_library.value %}
-          {% if design_library_value != blank %}
+          {% assign design_library_entries = shop.metaobjects.design_library.values %}
+          {% if design_library_entries != blank %}
             <script type="application/json" id="TemplateLibraryJson-{{ section.id }}">
               [
-                {% if design_library_value.url != blank %}
-                  {
-                    "url": {{ design_library_value.url | json }},
-                    "alt": {{ design_library_value.alt | default: design_library_value.filename | default: 'Template image' | json }}
-                  }
-                {% else %}
-                  {% for template_file in design_library_value %}
-                    {
-                      "url": {% if template_file.url != blank %}{{ template_file.url | json }}{% elsif template_file.preview_image %}{{ template_file.preview_image | image_url: width: 1500 | json }}{% else %}""{% endif %},
-                      "alt": {{ template_file.alt | default: template_file.filename | default: 'Template image' | json }}
-                    }{% unless forloop.last %},{% endunless %}
-                  {% endfor %}
-                {% endif %}
+                {% assign first_item = true %}
+                {% for design_entry in design_library_entries %}
+                  {% assign entry_images = design_entry.images.value | default: design_entry.images %}
+                  {% if entry_images != blank %}
+                    {% for template_file in entry_images %}
+                      {% assign template_url = template_file.url | default: template_file.preview_image | image_url %}
+                      {% if template_url != blank %}
+                        {% unless first_item %},{% endunless %}
+                        {
+                          "url": {{ template_url | json }},
+                          "alt": {{ template_file.alt | default: template_file.filename | default: design_entry.display_name | default: 'Template image' | json }}
+                        }
+                        {% assign first_item = false %}
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
               ]
             </script>
           {% endif %}
@@ -186,7 +187,7 @@
             <div class="template-modal__backdrop" data-close-template-modal></div>
             <div class="template-modal__panel" role="dialog" aria-modal="true" aria-label="Template library">
               <div class="template-modal__header">
-                <h3 class="template-modal__title">Choose an image from the library</h3>
+                <h3 class="template-modal__title">Template library</h3>
                 <button type="button" class="template-modal__close" data-close-template-modal aria-label="Close">X</button>
               </div>
               <div class="template-modal__grid" id="TemplateGrid-{{ section.id }}"></div>
@@ -235,6 +236,9 @@
 </script>
 
 <style>
+  .custom-controls.card .controls label {
+    font-size: 16px;
+}
   .size-options label{
     font-size: 16px;
   }
@@ -251,7 +255,7 @@
 
   #ProductSection[data-section-id="{{ section.id }}"] .preview-wrap {
     border: 1px solid #d5d5d5;
-    border-radius: 0 8px 8px 0;
+    {% comment %} border-radius: 0 8px 8px 0; {% endcomment %}
     height: 540px;
     overflow: hidden;
     background-image:
@@ -273,11 +277,11 @@
 
   #ProductSection[data-section-id="{{ section.id }}"] .preview-frame {
     display: grid;
-    grid-template-columns: 34px 1fr;
-    grid-template-rows: 34px 1fr;
+    grid-template-columns: 28px 1fr;
+    grid-template-rows: 28px 1fr;
     background: #f3f3f3;
     border: 1px solid #222;
-    border-radius: 8px;
+    {% comment %} border-radius: 8px; {% endcomment %}
     overflow: hidden;
   }
 
@@ -301,12 +305,12 @@
 
   #ProductSection[data-section-id="{{ section.id }}"] .preview-ruler--top {
     width: 100%;
-    height: 34px;
+    height: 28px;
     border-bottom: 1px solid #222;
   }
 
   #ProductSection[data-section-id="{{ section.id }}"] .preview-ruler--left {
-    width: 34px;
+    width: 28px;
     height: 100%;
     border-right: 1px solid #222;
   }
@@ -370,7 +374,7 @@
 
   #ProductSection[data-section-id="{{ section.id }}"] .row {
     display: grid;
-    grid-template-columns: 100px 1fr;
+    grid-template-columns: 120px 1fr;
     align-items: center;
     gap: 10px;
   }
@@ -657,7 +661,7 @@
         caption.textContent = template.alt;
 
         button.appendChild(img);
-        button.appendChild(caption);
+        {% comment %} button.appendChild(caption); {% endcomment %}
         templateGrid.appendChild(button);
       }
     }
@@ -705,8 +709,8 @@
       updateImageSourceUI('template');
       setImageSourceProperty('Template image');
       if (templateImagePropertyInput) templateImagePropertyInput.value = altText || url;
-      setImageUrlOnField(url);
-      loadImageFromUrl(url);
+      {% comment %} setImageUrlOnField(url);
+      loadImageFromUrl(url); {% endcomment %}
       closeTemplateModal();
     }
 
