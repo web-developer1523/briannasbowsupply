@@ -9,6 +9,11 @@
           <canvas id="CustomizerCanvas-{{ section.id }}" width="700" height="500"></canvas>
         </div>
       </div>
+      <div class="image-customizer-tool__zoom-bar" id="CustomizerZoomBar-{{ section.id }}" aria-label="Preview zoom">
+        <button type="button" class="image-customizer-tool__zoom-btn" id="CustomizerZoomOut-{{ section.id }}" aria-label="Zoom out">&#8722;</button>
+        <span class="image-customizer-tool__zoom-pct" id="CustomizerZoomPct-{{ section.id }}">100%</span>
+        <button type="button" class="image-customizer-tool__zoom-btn" id="CustomizerZoomIn-{{ section.id }}" aria-label="Zoom in">+</button>
+      </div>
     </div>
 
     <div class="image-customizer-tool__controls">
@@ -26,34 +31,28 @@
 
       <div class="image-customizer-tool__scale">
         <label for="CustomizerScale-{{ section.id }}">
-          Adjust Scale:
-          <span id="CustomizerScaleValue-{{ section.id }}">3.00 X 3.00in</span>
+          Adjust Scale (zoom):
+          <span id="CustomizerScaleValue-{{ section.id }}">12.00 X 12.00in</span>
         </label>
-        <input id="CustomizerScale-{{ section.id }}" type="range" min="0.1" max="4" step="0.01" value="1">
+        <input id="CustomizerScale-{{ section.id }}" type="range" min="0.1" max="58" step="0.01" value="12">
       </div>
 
       <div class="image-customizer-tool__row">
-        <span>Size</span>
+        <span>Preview size</span>
         <div id="CustomizerSizes-{{ section.id }}" class="image-customizer-tool__sizes">
-          <label><input type="radio" name="customizerSize-{{ section.id }}" value="3x3" checked> 3x3</label>
-          <label><input type="radio" name="customizerSize-{{ section.id }}" value="4x4"> 4x4</label>
-          <label><input type="radio" name="customizerSize-{{ section.id }}" value="5x5"> 5x5</label>
-          <label><input type="radio" name="customizerSize-{{ section.id }}" value="6x6"> 6x6</label>
-          <label><input type="radio" name="customizerSize-{{ section.id }}" value="7x7"> 7x7</label>
-          <label><input type="radio" name="customizerSize-{{ section.id }}" value="8x8"> 8x8</label>
-          <label><input type="radio" name="customizerSize-{{ section.id }}" value="10x10"> 10x10</label>
-          <label><input type="radio" name="customizerSize-{{ section.id }}" value="12x12"> 12x12</label>
+          <label><input type="radio" name="customizerSize-{{ section.id }}" value="12x12" checked> 12×12</label>
+          <label><input type="radio" name="customizerSize-{{ section.id }}" value="58x36"> 58×36</label>
         </div>
       </div>
 
       <div class="image-customizer-tool__row">
         <label for="CustomizerWidth-{{ section.id }}">Image Width</label>
-        <input id="CustomizerWidth-{{ section.id }}" type="number" min="0.01" step="0.01" value="3.00">
+        <input id="CustomizerWidth-{{ section.id }}" type="number" min="0.01" step="0.01" value="12.00">
       </div>
 
       <div class="image-customizer-tool__row">
         <label for="CustomizerHeight-{{ section.id }}">Image Height</label>
-        <input id="CustomizerHeight-{{ section.id }}" type="number" min="0.01" step="0.01" value="3.00">
+        <input id="CustomizerHeight-{{ section.id }}" type="number" min="0.01" step="0.01" value="12.00">
       </div>
     </div>
   </div>
@@ -63,21 +62,36 @@
     <script type="application/json" id="CustomizerTemplateLibrary-{{ section.id }}">
       [
         {% assign first_item = true %}
-        {% for design_entry in design_library_entries %}
-          {% assign entry_images = design_entry.images.value | default: design_entry.images %}
-          {% if entry_images != blank %}
-            {% for template_file in entry_images %}
-              {% assign template_url = template_file.url | default: template_file.preview_image | image_url: width: 1500 %}
-              {% if template_url != blank %}
-                {% unless first_item %},{% endunless %}
-                {
-                  "url": {{ template_url | json }},
-                  "alt": {{ template_file.alt | default: template_file.filename | default: design_entry.display_name | default: 'Template image' | json }}
-                }
-                {% assign first_item = false %}
+        {% assign seen_urls = '|' %}
+        {% for image_index in (1..100) %}
+          {% for design_entry in design_library_entries %}
+            {% if image_index == 1 %}
+              {% assign entry_images = design_entry.images_1.value | default: design_entry.images_1 %}
+              {% if entry_images == blank %}
+                {% assign entry_images = design_entry.images.value | default: design_entry.images %}
               {% endif %}
-            {% endfor %}
-          {% endif %}
+            {% else %}
+              {% assign image_key = 'images_' | append: image_index %}
+              {% assign entry_images = design_entry[image_key].value | default: design_entry[image_key] %}
+            {% endif %}
+            {% if entry_images != blank %}
+              {% for template_file in entry_images %}
+                {% assign template_url = template_file.url | default: template_file.preview_image | image_url: width: 1500 %}
+                {% if template_url != blank %}
+                  {% assign seen_key = '|' | append: template_url | append: '|' %}
+                  {% unless seen_urls contains seen_key %}
+                    {% unless first_item %},{% endunless %}
+                    {
+                      "url": {{ template_url | json }},
+                      "alt": {{ template_file.alt | default: template_file.filename | default: design_entry.display_name | default: 'Template image' | json }}
+                    }
+                    {% assign first_item = false %}
+                    {% assign seen_urls = seen_urls | append: template_url | append: '|' %}
+                  {% endunless %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
         {% endfor %}
       ]
     </script>
@@ -123,13 +137,18 @@
   color: #d77cae;
   border:none;
 }
-  #ImageCustomizer-{{ section.id }} .image-customizer-tool__layout { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  #ImageCustomizer-{{ section.id }} .image-customizer-tool__frame { display: grid; grid-template-columns: 28px 1fr; grid-template-rows: 28px 1fr; border: 1px solid #222; overflow: hidden; background: #f3f3f3; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__layout { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__preview { display: flex; flex-direction: column; align-items: stretch; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__frame { display: grid; grid-template-columns: 28px max-content; grid-template-rows: 28px max-content; border: 1px solid #222; overflow: hidden; background: #f3f3f3; box-sizing: border-box; width: fit-content; max-width: 100%; margin: 0 auto; min-height: 160px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__zoom-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px; padding: 0 2px; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__zoom-btn { width: 36px; height: 32px; border: 1px solid #bbb; border-radius: 6px; background: #fff; font-size: 20px; line-height: 1; cursor: pointer; color: #222; padding: 0; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__zoom-btn:hover { border-color: #222; background: #f5f5f5; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__zoom-pct { min-width: 54px; text-align: center; font-size: 14px; font-weight: 600; color: #222; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__corner { background: #111; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; border-right: 1px solid #222; border-bottom: 1px solid #222; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__ruler { background: #f7f7f7; display: block; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__ruler--top { width: 100%; height: 28px; border-bottom: 1px solid #222; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__ruler--left { width: 28px; height: 100%; border-right: 1px solid #222; }
-  #ImageCustomizer-{{ section.id }} .image-customizer-tool__preview-wrap { height: 540px; overflow: hidden; background: #fff; }
+  #ImageCustomizer-{{ section.id }} .image-customizer-tool__preview-wrap { box-sizing: border-box; width: 100%; max-width: 100%; overflow: hidden; background: #fff; border: 1px solid #d5d5d5; justify-self: center; align-self: center; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__preview-wrap canvas { width: 100%; height: 100%; display: block; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__controls { display: grid; gap: 12px; align-content: start; }
   #ImageCustomizer-{{ section.id }} .image-customizer-tool__source-options { display: flex; gap: 14px; flex-wrap: wrap; }
@@ -162,7 +181,11 @@
     white-space: nowrap !important;
     border: 0 !important;
   }
-  @media (max-width: 989px) { #ImageCustomizer-{{ section.id }} .image-customizer-tool__layout { grid-template-columns: 1fr; } }
+  @media (min-width: 990px) {
+    #ImageCustomizer-{{ section.id }} .image-customizer-tool__preview {
+      width: 100%;
+    }
+  }
 </style>
 
 <script>
@@ -175,8 +198,12 @@
     var topRulerCanvas = document.getElementById('CustomizerRulerTop-' + sectionId);
     var leftRulerCanvas = document.getElementById('CustomizerRulerLeft-' + sectionId);
     var previewWrap = root.querySelector('.image-customizer-tool__preview-wrap');
+    var previewFrame = root.querySelector('.image-customizer-tool__frame');
     var scaleSlider = document.getElementById('CustomizerScale-' + sectionId);
     var scaleValue = document.getElementById('CustomizerScaleValue-' + sectionId);
+    var previewZoomOut = document.getElementById('CustomizerZoomOut-' + sectionId);
+    var previewZoomIn = document.getElementById('CustomizerZoomIn-' + sectionId);
+    var previewZoomPct = document.getElementById('CustomizerZoomPct-' + sectionId);
     var sizeWrap = document.getElementById('CustomizerSizes-' + sectionId);
     var widthInput = document.getElementById('CustomizerWidth-' + sectionId);
     var heightInput = document.getElementById('CustomizerHeight-' + sectionId);
@@ -194,23 +221,24 @@
     var templatePageInfo = document.getElementById('CustomizerTemplatePageInfo-' + sectionId);
     var templateDataScript = document.getElementById('CustomizerTemplateLibrary-' + sectionId);
 
-    if (!canvas || !topRulerCanvas || !leftRulerCanvas || !previewWrap || !scaleSlider || !sizeWrap || !widthInput || !heightInput) return;
+    if (!canvas || !topRulerCanvas || !leftRulerCanvas || !previewWrap || !previewFrame || !scaleSlider || !sizeWrap || !widthInput || !heightInput) return;
 
     var ctx = canvas.getContext('2d');
     var topCtx = topRulerCanvas.getContext('2d');
     var leftCtx = leftRulerCanvas.getContext('2d');
     var uploadedImage = null;
-    var imageWidthInches = 3;
-    var imageHeightInches = 3;
     var imageAspectRatio = 1;
-    var scale = 1;
-    var canvasInches = { width: 3, height: 3 };
-    var activeSizePreset = '3x3';
+    var canvasInches = { width: 12, height: 12 };
+    var activeSizePreset = '';
     var templateItems = [];
-    var rulerThickness = 34;
+    var rulerThickness = 28;
     var TEMPLATE_PAGE_SIZE = 15;
     var templateCurrentPage = 1;
     var templateSearchTimer = null;
+    var PREVIEW_ZOOM_STEP = 2;
+    var PREVIEW_ZOOM_MIN_PCT = 25;
+    var PREVIEW_ZOOM_MAX_PCT = 800;
+    var previewZoomPercent = 100;
 
     function parseTemplateItems() {
       if (!templateDataScript) return [];
@@ -235,6 +263,82 @@
       if (leftRulerCanvas.width !== rulerThickness || leftRulerCanvas.height !== h) { leftRulerCanvas.width = rulerThickness; leftRulerCanvas.height = h; }
     }
 
+    function layoutPreviewFrame() {
+      if (!previewFrame || !previewWrap) return;
+      var parent = previewFrame.parentElement;
+      var capOuterW = parent && parent.clientWidth > 0 ? parent.clientWidth : previewFrame.clientWidth;
+      if (!capOuterW || capOuterW < 40) capOuterW = Math.max(previewFrame.clientWidth, 320);
+      capOuterW = Math.min(capOuterW, 700);
+      var capOuterH = Math.min(window.innerHeight * 0.72, 760);
+      capOuterW = Math.floor(capOuterW);
+
+      var borderSlack = 4;
+      var innerMaxW = Math.max(24, capOuterW - rulerThickness - borderSlack);
+      var innerMaxH = Math.max(24, capOuterH - rulerThickness - borderSlack);
+
+      var px = Math.min(innerMaxW / canvasInches.width, innerMaxH / canvasInches.height);
+      var contentW = Math.max(1, Math.floor(canvasInches.width * px));
+      var contentH = Math.max(1, Math.round(contentW * canvasInches.height / canvasInches.width));
+      if (contentH > innerMaxH) {
+        contentH = Math.max(1, Math.floor(canvasInches.height * px));
+        contentW = Math.max(1, Math.round(contentH * canvasInches.width / canvasInches.height));
+      }
+      while (contentW + rulerThickness + borderSlack > capOuterW && contentW > 24) {
+        contentW--;
+        contentH = Math.max(1, Math.round(contentW * canvasInches.height / canvasInches.width));
+      }
+      while (contentH + rulerThickness + borderSlack > capOuterH && contentH > 24) {
+        contentH--;
+        contentW = Math.max(1, Math.round(contentH * canvasInches.width / canvasInches.height));
+      }
+
+      var outerW = rulerThickness + contentW;
+      var outerH = rulerThickness + contentH;
+      previewFrame.style.width = outerW + 'px';
+      previewFrame.style.height = outerH + 'px';
+      previewFrame.style.boxSizing = 'border-box';
+      previewFrame.style.maxWidth = '100%';
+      previewWrap.style.width = contentW + 'px';
+      previewWrap.style.height = contentH + 'px';
+    }
+
+    function isFullYardCanvas() {
+      return canvasInches.width === 58 && canvasInches.height === 36;
+    }
+
+    function getScaleSliderMax() {
+      return isFullYardCanvas() ? 58 : 12;
+    }
+
+    function getDefaultPrintWidthInches() {
+      var cw = canvasInches.width;
+      var ch = canvasInches.height;
+      var ar = Math.max(imageAspectRatio, 0.001);
+      return Math.min(cw, ch / ar);
+    }
+
+    function getPrintWidthInches() {
+      var m = getScaleSliderMax();
+      var v = parseFloat(scaleSlider.value);
+      if (!isFinite(v)) v = getDefaultPrintWidthInches();
+      return Math.min(Math.max(v, 0.1), m);
+    }
+
+    function syncScaleSliderMax() {
+      if (!scaleSlider) return;
+      var m = getScaleSliderMax();
+      scaleSlider.setAttribute('max', String(m));
+      var v = parseFloat(scaleSlider.value);
+      if (!isFinite(v)) v = 0.1;
+      v = Math.min(Math.max(v, 0.1), m);
+      scaleSlider.value = v.toFixed(2);
+    }
+
+    function applyFitPrintWidth() {
+      syncScaleSliderMax();
+      scaleSlider.value = getDefaultPrintWidthInches().toFixed(2);
+    }
+
     function getMajorStep(pxPerUnit) {
       if (pxPerUnit >= 20) return 1;
       if (pxPerUnit >= 10) return 2;
@@ -247,6 +351,7 @@
       var h = topRulerCanvas.height;
       var px = w / Math.max(inches, 0.001);
       var step = getMajorStep(px);
+      var labelMinGapPx = 30;
       topCtx.clearRect(0, 0, w, h);
       topCtx.fillStyle = '#f7f7f7';
       topCtx.fillRect(0, 0, w, h);
@@ -255,7 +360,9 @@
       topCtx.font = '12px Arial, sans-serif';
       topCtx.textAlign = 'center';
       topCtx.textBaseline = 'top';
-      for (var i = 0; i <= Math.ceil(inches); i++) {
+      var maxInchesTop = Math.ceil(inches);
+      var xEnd = Math.round(maxInchesTop * px) + 0.5;
+      for (var i = 0; i <= maxInchesTop; i++) {
         var x = Math.round(i * px) + 0.5;
         if (x < 0 || x > w + 1) continue;
         var major = i % step === 0;
@@ -263,7 +370,13 @@
         topCtx.moveTo(x, h);
         topCtx.lineTo(x, h - (major ? 12 : 7));
         topCtx.stroke();
-        if (major && i > 0) topCtx.fillText(String(i), Math.max(8, Math.min(w - 8, x)), 3);
+        var showLabel = (major && i > 0) || (i > 0 && i === maxInchesTop);
+        if (showLabel) {
+          if (i < maxInchesTop && (xEnd - x) < labelMinGapPx) {
+            continue;
+          }
+          topCtx.fillText(String(i), Math.max(8, Math.min(w - 8, x)), 3);
+        }
       }
     }
 
@@ -272,6 +385,7 @@
       var h = leftRulerCanvas.height;
       var px = h / Math.max(inches, 0.001);
       var step = getMajorStep(px);
+      var labelMinGapPx = 30;
       leftCtx.clearRect(0, 0, w, h);
       leftCtx.fillStyle = '#f7f7f7';
       leftCtx.fillRect(0, 0, w, h);
@@ -280,7 +394,9 @@
       leftCtx.font = '12px Arial, sans-serif';
       leftCtx.textAlign = 'left';
       leftCtx.textBaseline = 'middle';
-      for (var i = 0; i <= Math.ceil(inches); i++) {
+      var maxInchesLeft = Math.ceil(inches);
+      var yEnd = Math.round(maxInchesLeft * px) + 0.5;
+      for (var i = 0; i <= maxInchesLeft; i++) {
         var y = Math.round(i * px) + 0.5;
         if (y < 0 || y > h + 1) continue;
         var major = i % step === 0;
@@ -288,31 +404,55 @@
         leftCtx.moveTo(w, y);
         leftCtx.lineTo(w - (major ? 12 : 7), y);
         leftCtx.stroke();
-        if (major && i > 0) leftCtx.fillText(String(i), 3, Math.max(8, Math.min(h - 8, y)));
+        var showLabel = (major && i > 0) || (i > 0 && i === maxInchesLeft);
+        if (showLabel) {
+          if (i < maxInchesLeft && (yEnd - y) < labelMinGapPx) {
+            continue;
+          }
+          leftCtx.fillText(String(i), 3, Math.max(8, Math.min(h - 8, y)));
+        }
       }
     }
 
+    function updatePreviewZoomPctLabel() {
+      if (!previewZoomPct) return;
+      previewZoomPct.textContent = Math.round(previewZoomPercent) + '%';
+    }
+
+    function stepPreviewZoom(multiply) {
+      var nextPct = previewZoomPercent * multiply;
+      nextPct = Math.min(Math.max(nextPct, PREVIEW_ZOOM_MIN_PCT), PREVIEW_ZOOM_MAX_PCT);
+      previewZoomPercent = nextPct;
+      updatePreviewZoomPctLabel();
+      drawImage();
+    }
+
     function syncScaleOutputs() {
-      var w = imageWidthInches * scale;
-      var h = imageHeightInches * scale;
-      scaleValue.textContent = w.toFixed(2) + ' X ' + h.toFixed(2) + 'in';
-      widthInput.value = w.toFixed(2);
-      heightInput.value = h.toFixed(2);
+      var pw = getPrintWidthInches();
+      var ph = pw * imageAspectRatio;
+      scaleValue.textContent = pw.toFixed(2) + ' X ' + ph.toFixed(2) + 'in';
+      widthInput.value = pw.toFixed(2);
+      heightInput.value = ph.toFixed(2);
+      updatePreviewZoomPctLabel();
     }
 
     function drawImage() {
+      layoutPreviewFrame();
       syncCanvasToViewport();
-      drawTopRuler(canvasInches.width);
-      drawLeftRuler(canvasInches.height);
+      var zoomFactor = Math.max(previewZoomPercent / 100, 0.01);
+      var visibleWidthInches = canvasInches.width / zoomFactor;
+      var visibleHeightInches = canvasInches.height / zoomFactor;
+      drawTopRuler(visibleWidthInches);
+      drawLeftRuler(visibleHeightInches);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (!uploadedImage) return;
 
-      var pxPerInch = Math.min(
-        canvas.width / Math.max(canvasInches.width, 0.001),
-        canvas.height / Math.max(canvasInches.height, 0.001)
-      );
-      var drawW = Math.max(1, Math.round(imageWidthInches * scale * pxPerInch));
-      var drawH = Math.max(1, Math.round(imageHeightInches * scale * pxPerInch));
+      var pxPerInch = canvas.width / Math.max(visibleWidthInches, 0.001);
+      var printW = getPrintWidthInches();
+      var drawW = Math.max(1, Math.round(printW * pxPerInch));
+      var drawH = Math.max(1, Math.round(printW * imageAspectRatio * pxPerInch));
+
+      ctx.imageSmoothingEnabled = true;
 
       var tileCanvas = document.createElement('canvas');
       tileCanvas.width = drawW;
@@ -334,8 +474,7 @@
       if (!isFinite(w) || !isFinite(h) || w <= 0 || h <= 0) return;
       canvasInches = { width: w, height: h };
       activeSizePreset = value;
-      imageWidthInches = w;
-      imageHeightInches = imageWidthInches * imageAspectRatio;
+      applyFitPrintWidth();
       syncScaleOutputs();
       drawImage();
     }
@@ -347,9 +486,7 @@
       img.onload = function() {
         uploadedImage = img;
         imageAspectRatio = img.naturalHeight > 0 && img.naturalWidth > 0 ? img.naturalHeight / img.naturalWidth : 1;
-        imageHeightInches = imageWidthInches * imageAspectRatio;
-        scale = 1;
-        scaleSlider.value = '1';
+        applyFitPrintWidth();
         syncScaleOutputs();
         drawImage();
       };
@@ -459,7 +596,7 @@
     templateItems = parseTemplateItems();
     renderTemplateGrid();
     updateSourceUI('upload');
-    applyCanvasSizePreset('3x3');
+    applyCanvasSizePreset('12x12');
     syncScaleOutputs();
     drawImage();
 
@@ -470,16 +607,30 @@
     }
 
     scaleSlider.addEventListener('input', function() {
-      scale = parseFloat(scaleSlider.value) || 1;
+      var m = getScaleSliderMax();
+      var v = Math.min(Math.max(parseFloat(scaleSlider.value) || 0.1, 0.1), m);
+      scaleSlider.value = v.toFixed(2);
       syncScaleOutputs();
       drawImage();
     });
 
+    if (previewZoomOut) {
+      previewZoomOut.addEventListener('click', function() {
+        stepPreviewZoom(1 / PREVIEW_ZOOM_STEP);
+      });
+    }
+    if (previewZoomIn) {
+      previewZoomIn.addEventListener('click', function() {
+        stepPreviewZoom(PREVIEW_ZOOM_STEP);
+      });
+    }
+
     widthInput.addEventListener('input', function() {
       var w = parseFloat(widthInput.value);
       if (!isFinite(w) || w <= 0) return;
-      imageWidthInches = w / Math.max(scale, 0.001);
-      imageHeightInches = imageWidthInches * imageAspectRatio;
+      var m = getScaleSliderMax();
+      w = Math.min(Math.max(w, 0.1), m);
+      scaleSlider.value = w.toFixed(2);
       syncScaleOutputs();
       drawImage();
     });
@@ -487,8 +638,10 @@
     heightInput.addEventListener('input', function() {
       var h = parseFloat(heightInput.value);
       if (!isFinite(h) || h <= 0) return;
-      imageHeightInches = h / Math.max(scale, 0.001);
-      imageWidthInches = imageHeightInches / Math.max(imageAspectRatio, 0.001);
+      var pw = h / Math.max(imageAspectRatio, 0.001);
+      var m = getScaleSliderMax();
+      pw = Math.min(Math.max(pw, 0.1), m);
+      scaleSlider.value = pw.toFixed(2);
       syncScaleOutputs();
       drawImage();
     });
@@ -553,7 +706,7 @@
         }
         var item = target.closest ? target.closest('button[data-url]') : null;
         if (item) {
-           {% comment %} loadImageFromUrl(item.getAttribute('data-url'));  {% endcomment %}
+          loadImageFromUrl(item.getAttribute('data-url'));
           closeTemplateModal();
         }
       });
