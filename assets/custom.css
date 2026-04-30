@@ -1,0 +1,362 @@
+#ImageCustomizer-image-customizer-tool .image-customizer-tool__preview {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    background-color: #f8e6e5a1;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: rgb(211 214 217 / 7%) 0px 8px 24px;
+}
+
+#ImageCustomizer-image-customizer-tool .image-customizer-tool__zoom-bar {
+    justify-content: center !important;
+}
+
+#ImageCustomizer-image-customizer-tool .image-customizer-tool__controls {
+    display: grid;
+    gap: 12px;
+    align-content: center;
+    padding: 30px;
+    border: 1px solid #00000012;
+    border-radius: 10px;
+    box-shadow: rgb(132 132 145 / 9%) 0px 7px 29px 0px;
+}
+#ImageCustomizer-image-customizer-tool .image-customizer-tool__corner {
+    background: #d77cae !important;
+}
+
+.image-customizer-tool__source-options input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #d77cae; 
+  border-radius: 50%;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.image-customizer-tool__source-options input[type="radio"]:checked {
+  border-color: #d77cae;
+}
+
+.image-customizer-tool__source-options input[type="radio"]:checked::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: #d77cae; 
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+
+#CustomizerSizes-image-customizer-tool.image-customizer-tool__sizes input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #d77cae;
+  border-radius: 50%;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+#CustomizerSizes-image-customizer-tool.image-customizer-tool__sizes input[type="radio"]:checked {
+  border-color: #d77cae;
+}
+
+#CustomizerSizes-image-customizer-tool.image-customizer-tool__sizes input[type="radio"]:checked::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: #d77cae;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#CustomizerSizes-image-customizer-tool.image-customizer-tool__sizes label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+#CustomizerScale-image-customizer-tool {
+  width: 100%;
+  height: 6px;
+  border-radius: 10px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background: linear-gradient(to right, #d77cae 100%, #e5e5e5 100%);
+}
+
+#CustomizerScale-image-customizer-tool::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #d77cae;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+#CustomizerScale-image-customizer-tool::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #d77cae;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* product page css start */
+.custom-preview.product-preview-media.card {
+    background-color: #f8e6e5a1;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: rgb(211 214 217 / 7%) 0px 8px 24px;
+}
+#ProductSection[data-section-id="product-template"] .preview-zoom-bar {
+    justify-content: center !important;
+}
+
+.cst-product-grid .product-single__meta {
+    padding: 30px;
+    border: 1px solid #00000012;
+    border-radius: 10px;
+    box-shadow: rgb(132 132 145 / 9%) 0px 7px 29px 0px;
+}
+
+.cst-product-grid .image-source-options input[type="radio"]{
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #d77cae;
+  border-radius: 50%;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.cst-product-grid .image-source-options input[type="radio"]:checked {
+  border-color: #d77cae;
+}
+
+.cst-product-grid .image-source-options input[type="radio"]:checked::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: #d77cae;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.cst-product-grid .image-source-options label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.cst-product-grid .size-options input[type="radio"]{
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #d77cae;
+  border-radius: 50%;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.cst-product-grid .size-options input[type="radio"]:checked {
+  border-color: #d77cae;
+}
+
+.cst-product-grid .size-options input[type="radio"]:checked::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: #d77cae;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.cst-product-grid .size-options label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.cst-product-grid .preview-corner {
+    background: #d77cae !important;
+}
+
+.cst-product-grid .social-sharing {
+    margin: 0 0 !important;
+}
+
+/* 28/04/2026 css start */
+#CustomizerWidth-image-customizer-tool {
+  background-color: #faeeee; 
+  border: none;
+  padding: 10px;
+  width: 100%;
+  outline: none; 
+  box-shadow: none; 
+}
+#CustomizerWidth-image-customizer-tool:focus {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+#CustomizerHeight-image-customizer-tool{
+  background-color: #faeeee; 
+  border: none;
+  padding: 10px;
+  width: 100%;
+  outline: none; 
+  box-shadow: none;
+}
+#CustomizerHeight-image-customizer-tool:focus{
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+#CustomizerUploadInput-image-customizer-tool{
+  background-color: #faeeee; 
+  border: none;
+  padding: 10px;
+  outline: none; 
+  box-shadow: none;
+}
+#CustomizerUploadInput-image-customizer-tool:focus{
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+#widthInput-product-template{
+  background-color: #faeeee; 
+  border: none;
+  padding: 10px;
+  outline: none; 
+  box-shadow: none;
+}
+#widthInput-product-template:focus{
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+#heightInput-product-template{
+  background-color: #faeeee; 
+  border: none;
+  padding: 10px;
+  outline: none; 
+  box-shadow: none;
+}
+#heightInput-product-template:focus{
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+.cst-product-grid .spb-fileupload input[type="file"] {
+  background-color: #faeeee; 
+  border: none;
+  padding: 10px;
+  outline: none; 
+  box-shadow: none;
+}
+#AddToCart {
+    width: 100% !important;
+}
+
+#uploadery-container {
+    margin-bottom: 15px;
+}
+#CustomizerScaleValue-image-customizer-tool {
+    font-weight: 400 !important; 
+}
+
+.product-form label, .cart label {
+    font-weight: 600;
+}
+#sizeOptions-product-template label {
+    font-weight: 400;
+}
+.image-customizer-tool__row label {
+    font-weight: 600;
+}
+.image-customizer-tool__source-options label {
+    font-weight: 600;
+}
+#CustomizerUploadBlock-image-customizer-tool label {
+    font-weight: 600;
+}
+#CustomizerSizes-image-customizer-tool label {
+    font-weight: 400;
+}
+/* 28/04/2026 css end */ 
+
+
+/* media start */
+
+@media (max-width: 768px){
+#ImageCustomizer-image-customizer-tool .image-customizer-tool__layout {
+    grid-template-columns: repeat(auto-fit, minmax(352px, 1fr)) !important;
+}
+}
+
+@media (max-width: 749px){
+  #ImageCustomizer-image-customizer-tool .image-customizer-tool__layout {
+    grid-template-columns: repeat(auto-fit,minmax(352px,1fr))!important;
+}
+  .cst-product-grid .product-single__meta {
+    margin-top: 15px;
+}
+.cst-product-grid  .small--text-center {
+    text-align: start !important;
+}
+}
+
+@media (max-width: 500px){
+#CustomizerUploadInput-image-customizer-tool {
+    max-width: 300px;
+    margin: 0 auto;
+}
+}
+
+@media (max-width: 425px){
+#CustomizerUploadInput-image-customizer-tool {
+    max-width: 280px;
+    margin: 0 auto;
+}
+}
+
+
+@media (max-width: 375px){
+  #ImageCustomizer-image-customizer-tool .image-customizer-tool__layout {
+    grid-template-columns: repeat(auto-fit,minmax(250px,1fr))!important;
+}
+#CustomizerUploadInput-image-customizer-tool {
+    max-width: 250px;
+    margin: 0 auto;
+}
+}

@@ -10,7 +10,7 @@
   {% endcomment %}
   {% assign current_variant = product.selected_or_first_available_variant %}
 
-  <div class="grid product-single">
+  <div class="grid product-single cst-product-grid">
 
     <div class="grid__item medium-up--one-half">
       <div class="custom-preview product-preview-media card">
@@ -75,7 +75,16 @@
 
           {% form 'product', product, class:'product-form' %}
             <input type="hidden" name="id" id="ProductVariantId-{{ section.id }}" value="{{ current_variant.id }}">
-            {% comment %} <select name="id" id="ProductSelect-{{ section.id }}" class="product-single__variants">
+            {% comment %} {% for option in product.options_with_values %}
+              {% if option.name == 'Size' or option.name == 'size' %}
+                <select name="size" id="ProductSizeOption">
+                  {% for value in option.values %}
+                    <option value="{{ value }}">{{ value }}</option>
+                  {% endfor %}
+                </select>
+              {% endif %}
+            {% endfor %} {% endcomment %}
+             <select name="id" id="ProductSelect-{{ section.id }}" class="product-single__variants">
               {% for variant in product.variants %}
                 {% if variant.available %}
                   <option {% if variant == product.selected_or_first_available_variant %} selected="selected" {% endif %} data-sku="{{ variant.sku }}" value="{{ variant.id }}">{{ variant.title }} - {{ variant.price | money_with_currency }}</option>
@@ -85,17 +94,17 @@
                   </option>
                 {% endif %}
               {% endfor %}
-            </select> {% endcomment %}
+            </select> 
 
 
 
             <div class="image-source-controls">
               <div class="image-source-options">
-                <label><input type="radio" name="imageSource-{{ section.id }}" value="upload" checked> Upload my image</label>
-                <label><input type="radio" name="imageSource-{{ section.id }}" value="template"> Choose template</label>
+                <label><input type="radio" name="imageSource-{{ section.id }}" value="upload" checked> Upload File</label>
+                <label><input type="radio" name="imageSource-{{ section.id }}" value="template"> Select From Gallery</label>
               </div>
             
-              <button type="button" id="OpenTemplatePicker-{{ section.id }}" class="btn image-source-button">Open template library</button>
+              <button type="button" id="OpenTemplatePicker-{{ section.id }}" class="btn image-source-button">Browse Gallery</button>
               <input type="hidden" id="ImageSource-{{ section.id }}" name="properties[Image_Source]" value="Uploaded image">
               <input type="hidden" id="TemplateImage-{{ section.id }}" value="">
             </div>
@@ -108,30 +117,30 @@
 
                 <div class="scale-control">
                   <label class="scale-control__label" for="scaleSlider-{{ section.id }}">
-                    Adjust Scale (zoom):
+                    Adjust Scale:
                     <span class="scale-control__value" id="scaleValue-{{ section.id }}">12.00 X 12.00in</span>
                   </label>
                   <input class="scale-control__slider" id="scaleSlider-{{ section.id }}" type="range" min="0.1" max="58" step="0.01" value="12">
                 </div>
 
                 <div class="row">
-                  <span>Preview size</span>
+                  <label>Preview Size</label>
                   <div class="size-options" id="sizeOptions-{{ section.id }}">
-                    <label><input type="radio" name="canvasSize-{{ section.id }}" value="12x12" checked> 12×12 (repeat)</label>
-                    <label><input type="radio" name="canvasSize-{{ section.id }}" value="58x36"> 58×36 (full yard)</label>
+                    <label><input type="radio" name="canvasSize-{{ section.id }}" value="12x12" checked> 12×12</label>
+                    <label><input type="radio" name="canvasSize-{{ section.id }}" value="58x36"> 58×36</label>
                   </div>
                   {% comment %} <span class="value" id="sizeValue-{{ section.id }}">3"</span> {% endcomment %}
                 </div>
 
                 <div class="row">
                   <label for="widthInput-{{ section.id }}">Image Width</label>
-                  <input id="widthInput-{{ section.id }}" type="number" min="0.01" step="0.01" value="12">
+                  <input id="widthInput-{{ section.id }}" type="text" min="0.01" step="0.01" value="12">
                   {% comment %} <span class="value">in</span> {% endcomment %}
                 </div>
 
                 <div class="row">
                   <label for="heightInput-{{ section.id }}">Image Height</label>
-                  <input id="heightInput-{{ section.id }}" type="number" min="0.01" step="0.01" value="12">
+                  <input id="heightInput-{{ section.id }}" type="text" min="0.01" step="0.01" value="12">
                   {% comment %} <span class="value">in</span> {% endcomment %}
                 </div>
               </div>
@@ -148,7 +157,7 @@
             {% endif %}
 
             <div class="product-single__cart-submit-wrapper{% if section.settings.enable_payment_button %} product-single__shopify-payment-btn{% endif %}{% if section.settings.add_to_cart_width == 'full_width' %} product-form--full{% endif %}">
-              <button type="submit" name="add" id="AddToCart"class="btn product-single__cart-submit{% if section.settings.add_to_cart_width == 'full_width' %} btn--full{% endif %}{% if section.settings.enable_payment_button %} shopify-payment-btn btn--secondary{% endif %}">
+              <button type="submit" name="add" id="AddToCart"class="btn product-single__cart-submit{% if section.settings.add_to_cart_width == 'full_width' %} btn--full{% endif %}{% if section.settings.enable_payment_button %} shopify-payment-btn btn--primary{% endif %}">
                 <span id="AddToCartText">{{ 'products.product.add_to_cart' | t }}</span>
               </button>
               {% if section.settings.enable_payment_button %}
@@ -202,12 +211,12 @@
             <div class="template-modal__backdrop" data-close-template-modal></div>
             <div class="template-modal__panel" role="dialog" aria-modal="true" aria-label="Template library">
               <div class="template-modal__header">
-                <h3 class="template-modal__title">Template library</h3>
+                <h3 class="template-modal__title">BBSS Co. Gallery</h3>
                 <button type="button" class="template-modal__close" data-close-template-modal aria-label="Close">X</button>
               </div>
               <div class="template-modal__toolbar">
                 <label class="visually-hidden" for="TemplateSearch-{{ section.id }}">Search templates</label>
-                <input type="search" id="TemplateSearch-{{ section.id }}" class="template-modal__search" placeholder="Search templates..." autocomplete="off">
+                <input type="search" id="TemplateSearch-{{ section.id }}" class="template-modal__search" placeholder="Search..." autocomplete="off">
               </div>
               <div class="template-modal__grid" id="TemplateGrid-{{ section.id }}"></div>
               <div class="template-modal__pagination hidden" id="TemplatePagination-{{ section.id }}">
@@ -396,7 +405,7 @@
   #ProductSection[data-section-id="{{ section.id }}"] .scale-control__label {
     display: block;
     margin: 0;
-    color: #111;
+    color: #621329;
     font-size: 16px;
     font-weight: 700;
     line-height: normal;
@@ -405,17 +414,18 @@
   #ProductSection[data-section-id="{{ section.id }}"] .scale-control__value {
     font-size: 16px;
     font-weight: 400;
-    color: #555;
+    color: #621329;
     margin-left: 8px;
   }
+ 
 
-  #ProductSection[data-section-id="{{ section.id }}"] .scale-control__slider {
+#ProductSection[data-section-id="{{ section.id }}"] .scale-control__slider {
     width: 100%;
-    {% comment %} appearance: none; {% endcomment %}
-    {% comment %} -webkit-appearance: none; {% endcomment %}
-    height: 10px;
+     appearance: none; 
+     -webkit-appearance: none; 
+    height: 6px;
     border-radius: 999px;
-    background: #2992cc;
+    background: #d77cae;
     outline: none;
     padding: 0;
   }
@@ -423,11 +433,11 @@
   #ProductSection[data-section-id="{{ section.id }}"] .scale-control__slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 28px;
-    height: 28px;
+    width: 15px;
+    height: 15px;
     border-radius: 50%;
     border: 0;
-    background: #95cbb8;
+    background: #d77cae;
     cursor: pointer;
   }
 
@@ -436,9 +446,9 @@
     height: 28px;
     border-radius: 50%;
     border: 0;
-    background: #95cbb8;
+    background: #ffffff15;
     cursor: pointer;
-  }
+  } 
 
   #ProductSection[data-section-id="{{ section.id }}"] .row {
     display: grid;
@@ -545,7 +555,7 @@
 
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__panel {
     position: relative;
-    width: min(900px, 100%);
+    width: min(960px, 100%);
     max-height: 85vh;
     overflow: auto;
     background: #fff;
@@ -560,10 +570,15 @@
     gap: 10px;
     margin-bottom: 12px;
   }
-
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__header button {
+    background: #fff;
+    border: none;
+    font-size: 16px;
+    color: #d77cae;
+  }
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__title {
     margin: 0;
-    font-size: 18px;
+    {% comment %} font-size: 18px; {% endcomment %}
   }
 
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__close {
@@ -593,7 +608,7 @@
 
   #ProductSection[data-section-id="{{ section.id }}"] .template-item img {
     width: 100%;
-    height: 130px;
+    height: 150px;
     object-fit: cover;
     display: block;
   }
@@ -619,14 +634,17 @@
   }
 
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__search {
-    width: 100%;
+    width: 97%;
     max-width: 100%;
     padding: 10px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid #000;
     border-radius: 6px;
     font-size: 15px;
+    background: transparent;
   }
-
+  #ProductSection[data-section-id="{{ section.id }}"] .template-modal__search::placeholder {
+    color: #621329;
+  }
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__pagination {
     display: flex;
     align-items: center;
@@ -635,7 +653,7 @@
     flex-wrap: wrap;
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #000;
   }
 
   #ProductSection[data-section-id="{{ section.id }}"] .template-modal__page-info {
@@ -704,7 +722,7 @@
     var activeSizePreset = '';
     var templateItems = [];
     var canonicalImageField = null;
-    var TEMPLATE_PAGE_SIZE = 12;
+    var TEMPLATE_PAGE_SIZE = 15;
     var templateCurrentPage = 1;
     var templateSearchTimer = null;
     var PREVIEW_ZOOM_STEP = 2;
@@ -1268,7 +1286,7 @@
     }
 
     // Ensure a standard line-item property exists for cart if app uses a different field.
-    if (form) {
+    {% comment %} if (form) {
       canonicalImageField = form.querySelector('[name="properties[Uploaded_Image]"]');
       if (!canonicalImageField) {
         canonicalImageField = document.createElement('input');
@@ -1277,8 +1295,8 @@
         canonicalImageField.id = 'Uploaded_Image-' + sectionId;
         form.appendChild(canonicalImageField);
       }
-    }
-
+    } {% endcomment %}
+    canonicalImageField = document.getElementById('ImageSource-product-customizable-template') || null;
     templateItems = parseTemplateItems();
     renderTemplateGrid();
 

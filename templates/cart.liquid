@@ -16,48 +16,167 @@
           <tbody>
             {% for item in cart.items %}
               <tr class="cart__row responsive-table__row">
+                {% assign custom_image = '' %}
+
+                {% for p in item.properties %}
+                  {% assign prop_value = p.last | strip %}
+
+                  {% if prop_value contains 'http' or prop_value contains 'cdn/shop' %}
+                    {% comment %} Clean malformed URLs like "uploaded Image://..." {% endcomment %}
+                    {% assign cleaned_url = prop_value
+                      | replace: 'uploaded Image:', ''
+                      | replace: 'image:', ''
+                      | replace: 'Image:', ''
+                      | strip
+                    %}
+
+                    {% assign custom_image = cleaned_url %}
+                  {% endif %}
+                {% endfor %}
                 <td class="cart__table-cell--image small--text-center">
-                  {% unless item.image == blank %}
+                  {% if custom_image != blank %}
+                    <!-- Show uploaded image -->
+                    <a href="{{ item.url | within: collections.all }}">
+                      <img
+                        id="{{ img_id }}"
+                        src="{{ custom_image }}"
+                        alt="Custom uploaded image"
+                        class="cart_upload_img"
+                      >
+                    </a>
+
+                  {% elsif item.image != blank %}
+                    <!-- Default product image -->
                     {%- assign img_url = item.image | img_url: '1x1' | replace: '_1x1.', '_{width}x.' -%}
                     {%- capture wrapper_id -%}CartImageWrapper--{{ item.image.id }}{%- endcapture -%}
                     {%- capture img_id -%}CartImage--{{ item.image.id }}{%- endcapture -%}
-                    {% include 'image-style' with image: item.image, width: 720, height: 600, small_style: false, wrapper_id: wrapper_id, img_id: img_id %}
+
+                    {% render 'image-style' with image: item.image, width: 720, height: 600, small_style: false, wrapper_id: wrapper_id, img_id: img_id %}
+
                     <div id="{{ wrapper_id }}" class="cart__image-wrapper supports-js">
-                      <a class="cart__image-container" href="{{ item.url | within: collections.all }}" style="padding-top:{{ 1 | divided_by: item.image.aspect_ratio | times: 100}}%;">
-                        <img id="{{ img_id }}"
-                             class="cart__image lazyload"
-                             src="{{ item.image | img_url: '100x100' }}"
-                             data-src="{{ img_url }}"
-                             data-widths="[180, 230, 360, 540, 720, 900, 1080, 1296, 1512, 1728, 2048]"
-                             data-aspectratio="{{ item.image.aspect_ratio }}"
-                             data-sizes="auto"
-                             alt="{{ item.title | escape }}"
-                             itemprop="image">
+                      <a
+                        class="cart__image-container"
+                        href="{{ item.url | within: collections.all }}"
+                        style="padding-top:{{ 1 | divided_by: item.image.aspect_ratio | times: 100}}%;"
+                      >
+                        <img
+                          id="{{ img_id }}"
+                          class="cart__image lazyload"
+                          src="{{ item.image | img_url: '100x100' }}"
+                          data-src="{{ img_url }}"
+                          data-widths="[180, 230, 360, 540, 720, 900, 1080, 1296, 1512, 1728, 2048]"
+                          data-aspectratio="{{ item.image.aspect_ratio }}"
+                          data-sizes="auto"
+                          alt="{{ item.title | escape }}"
+                          itemprop="image"
+                        >
                       </a>
                     </div>
+
                   {% else %}
-                    <a class="supports-js" href="{{ item.url | within: collections.all }}">
+                    <!-- Fallback -->
+                    <a href="{{ item.url | within: collections.all }}">
                       <img src="{{ item | img_url: 'grande' }}" alt="{{ item.title | escape }}">
                     </a>
-                  {% endunless %}
-
-                  <noscript>
-                    <a href="{{ item.url | within: collections.all }}">
-                      <img class="cart__image" src="{{ item | img_url: 'grande' }}" alt="{{ item.title | escape }}">
-                    </a>
-                  </noscript>
+                  {% endif %}
                 </td>
+                {% comment %}
+                  ---Backup default product image logic----
+
+                   <td class="cart__table-cell--image small--text-center">
+                    {% unless item.image == blank %}
+                      {%- assign img_url = item.image | img_url: '1x1' | replace: '_1x1.', '_{width}x.' -%}
+                      {%- capture wrapper_id -%}CartImageWrapper--{{ item.image.id }}{%- endcapture -%}
+                      {%- capture img_id -%}CartImage--{{ item.image.id }}{%- endcapture -%}
+                      {% include 'image-style' with image: item.image, width: 720, height: 600, small_style: false, wrapper_id: wrapper_id, img_id: img_id %}
+                      <div id="{{ wrapper_id }}" class="cart__image-wrapper supports-js">
+                        <a class="cart__image-container" href="{{ item.url | within: collections.all }}" style="padding-top:{{ 1 | divided_by: item.image.aspect_ratio | times: 100}}%;">
+                          <img id="{{ img_id }}"
+                               class="cart__image lazyload"
+                               src="{{ item.image | img_url: '100x100' }}"
+                               data-src="{{ img_url }}"
+                               data-widths="[180, 230, 360, 540, 720, 900, 1080, 1296, 1512, 1728, 2048]"
+                               data-aspectratio="{{ item.image.aspect_ratio }}"
+                               data-sizes="auto"
+                               alt="{{ item.title | escape }}"
+                               itemprop="image">
+                        </a>
+                      </div>
+                    {% else %}
+                      <a class="supports-js" href="{{ item.url | within: collections.all }}">
+                        <img src="{{ item | img_url: 'grande' }}" alt="{{ item.title | escape }}">
+                      </a>
+                    {% endunless %}
+                    <noscript>
+                      <a href="{{ item.url | within: collections.all }}">
+                        <img class="cart__image" src="{{ item | img_url: 'grande' }}" alt="{{ item.title | escape }}">
+                      </a>
+                    </noscript>
+                  </td>
+                {% endcomment %}
                 <td class="cart__table-cell--meta small--text-center">
                   <p>
                     <a href="{{ item.url }}">{{ item.product.title }}</a>
                     {% unless item.variant.title contains 'Default' %}
-                      <br><small>{{ item.variant.title }}</small>
+                      <br>
+                      <small>{{ item.variant.title }}</small>
                     {% endunless %}
 
                     {% assign property_size = item.properties | size %}
                     {% if property_size > 0 %}
                       <ul class="cart-item__properties" aria-label="Item customization details">
                         {% for p in item.properties %}
+  {% assign first_character_in_key = p.first | truncate: 1, '' %}
+
+  {% unless p.last == blank or first_character_in_key == '_' or p.first == 'Template_Image' %}
+
+    {%- comment -%} ✅ Normalize raw key for comparison {%- endcomment -%}
+    {% assign raw_key_clean = p.first | strip | downcase %}
+
+    {%- comment -%} ❌ Skip Canvas Size completely {%- endcomment -%}
+    {% if raw_key_clean == "canvas size" or raw_key_clean == "canvas_size" %}
+      {% continue %}
+    {% endif %}
+
+    {%- comment -%} ✏️ Format label {%- endcomment -%}
+    {% assign raw_key = p.first | replace: '_', ' ' %}
+    {% assign key_words = raw_key | split: ' ' %}
+
+    {% capture formatted_key %}
+      {% for word in key_words %}
+        {{ word | downcase | capitalize }}{% unless forloop.last %} {% endunless %}
+      {% endfor %}
+    {% endcapture %}
+
+    {%- comment -%} ✏️ Rename Canvas Scale → Scale {%- endcomment -%}
+    {% if raw_key_clean == "canvas scale" or raw_key_clean == "canvas_scale" %}
+      {% assign display_key = "Scale" %}
+    {% else %}
+      {% assign display_key = formatted_key | strip %}
+    {% endif %}
+
+    <li class="cart-item__property">
+      <span class="cart-item__property-label">{{ display_key }}:</span>
+
+      {% assign prop_value = p.last | strip %}
+
+      {% if prop_value contains '/uploads/' or prop_value contains 'uploadery.s3' %}
+        <a href="{{ prop_value }}" target="_blank" rel="noopener">View upload</a>
+
+      {% elsif prop_value contains 'http://' or prop_value contains 'https://' %}
+        <a href="{{ prop_value }}" target="_blank" rel="noopener">
+          {{- prop_value | split: '/' | last -}}
+        </a>
+
+      {% else %}
+        <span class="cart-item__property-value">{{ prop_value }}</span>
+      {% endif %}
+    </li>
+
+  {% endunless %}
+{% endfor %}
+                        {% comment %} no value skip code
+                          {% for p in item.properties %}
                           {% assign first_character_in_key = p.first | truncate: 1, '' %}
                           {% unless p.last == blank or first_character_in_key == '_' or p.first == 'Template_Image' %}
                             {% assign raw_key = p.first | replace: '_', ' ' %}
@@ -68,24 +187,31 @@
                               {% endfor %}
                             {% endcapture %}
                             <li class="cart-item__property">
-                              <span class="cart-item__property-label">{{ formatted_key | strip }}:</span>
+                              {% if formatted_key != "Canvas Size" %}
+                                <span class="cart-item__property-label">{{ formatted_key | strip }}:</span>
+                              {% endif %}
                               {% assign prop_value = p.last | strip %}
                               {% if prop_value contains '/uploads/' or prop_value contains 'uploadery.s3' %}
                                 <a href="{{ prop_value }}" target="_blank" rel="noopener">View upload</a>
                               {% elsif prop_value contains 'http://' or prop_value contains 'https://' %}
-                                <a href="{{ prop_value }}" target="_blank" rel="noopener">{{ prop_value | split: '/' | last }}</a>
+                                <a href="{{ prop_value }}" target="_blank" rel="noopener">
+                                  {{- prop_value | split: '/' | last -}}
+                                </a>
                               {% else %}
                                 <span class="cart-item__property-value">{{ prop_value }}</span>
+                                
                               {% endif %}
                             </li>
                           {% endunless %}
-                        {% endfor %}
+                        {% endfor %} {% endcomment %}
                       </ul>
                     {% endif %}
                   </p>
 
                   <p class="txt--minor">
-                    <a href="/cart/change?line={{ forloop.index }}&amp;quantity=0" class="cart__remove">{{ 'cart.general.remove' | t }}</a>
+                    <a href="/cart/change?line={{ forloop.index }}&amp;quantity=0" class="cart__remove">
+                      {{- 'cart.general.remove' | t -}}
+                    </a>
                   </p>
                 </td>
                 <td class="cart__table-cell--price medium-up--text-center" data-label="{{ 'cart.label.price' | t }}">
@@ -93,19 +219,35 @@
                     {{ item.price | money }}
                   </span>
                 </td>
-                <td data-label="{{ 'cart.label.quantity' | t }}" class="medium-up--text-center cart__table-cell--quantity">
+                <td
+                  data-label="{{ 'cart.label.quantity' | t }}"
+                  class="medium-up--text-center cart__table-cell--quantity"
+                >
                   <label class="visually-hidden" for="updates_{{ item.key }}">{{ 'cart.label.quantity' | t }}</label>
-                  <input class="quantity-selector" type="number" name="updates[]" id="updates_{{ item.key }}" value="{{ item.quantity }}" min="0">
+                  <input
+                    class="quantity-selector"
+                    type="number"
+                    name="updates[]"
+                    id="updates_{{ item.key }}"
+                    value="{{ item.quantity }}"
+                    min="0"
+                  >
                 </td>
                 <td data-label="{{ 'cart.label.total' | t }}" class="text-right cart__table-cell--line-price">
                   {% if item.original_line_price != item.line_price %}
-                    <p class="cart-item__original-price"><small><s>{{ item.original_line_price | money }}</s></small></p>
+                    <p class="cart-item__original-price">
+                      <small
+                        ><s>{{ item.original_line_price | money }}</s></small
+                      >
+                    </p>
                   {% endif %}
                   <span>
                     {{ item.line_price | money }}
                   </span>
                   {% for discount in item.discounts %}
-                    <p class="cart-item__discount"><small>{{ discount.title }}</small></p>
+                    <p class="cart-item__discount">
+                      <small>{{ discount.title }}</small>
+                    </p>
                   {% endfor %}
                 </td>
               </tr>
@@ -117,7 +259,11 @@
           <div class="grid">
             <div class="grid__item medium-up--one-half">
               <label for="CartSpecialInstructions" class="label--block">{{ 'cart.general.note' | t }}</label>
-              <textarea name="note" id="CartSpecialInstructions" class="input--block cart__note">{{ cart.note }}</textarea>
+              <textarea
+                name="note"
+                id="CartSpecialInstructions"
+                class="input--block cart__note"
+              >{{ cart.note }}</textarea>
             </div>
             <div class="grid__item text-center medium-up--one-half medium-up--text-right">
               <p>
@@ -127,7 +273,9 @@
               {% if cart.total_discounts > 0 %}
                 {% assign savings = cart.total_discounts | money %}
                 <p>
-                  <span class="cart-subtotal__savings"><em>{{ 'cart.general.savings_html' | t: price: savings }}</em></span>
+                  <span class="cart-subtotal__savings"
+                    ><em>{{ 'cart.general.savings_html' | t: price: savings }}</em></span
+                  >
                 </p>
               {% endif %}
 
@@ -144,11 +292,11 @@
               {%- endcapture -%}
 
               <p class="cart__policies txt--emphasis rte">{{ taxes_shipping_checkout }}</p>
-              
-              <!--Route Code Edited 01/04/2022-->
+
+              <!-- Route Code Edited 01/04/2022 -->
               <div class="route-div"></div>
-              <!--End Route Code-->
-              
+              <!-- End Route Code -->
+
               <p>
                 <button type="submit" name="update" class="btn btn--secondary update-cart">
                   {% include 'icon-update' %}
@@ -164,9 +312,9 @@
         </footer>
       </form>
     {% else %}
-    {% comment %}
-      The cart is empty
-    {% endcomment %}
+      {% comment %}
+        The cart is empty
+      {% endcomment %}
       <div id="EmptyCart">
         <h1>{{ 'cart.general.title' | t }}</h1>
         <p class="cart--empty-message">{{ 'cart.general.empty' | t }}</p>
@@ -176,7 +324,6 @@
     {% endif %}
   </div>
 </div>
-
 
 <script src="https://widget.sezzle.com/v1/javascript/price-widget?uuid=d3fb6fec-437d-40fc-b48f-109b17ae3a74"></script>
 

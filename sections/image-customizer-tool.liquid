@@ -18,27 +18,27 @@
 
     <div class="image-customizer-tool__controls">
        <div class="image-customizer-tool__source-options">
-        <label><input type="radio" name="customizerSource-{{ section.id }}" value="upload" checked> Upload my image</label>
-        <label><input type="radio" name="customizerSource-{{ section.id }}" value="template"> Choose template</label>
+        <label><input type="radio" name="customizerSource-{{ section.id }}" value="upload" checked> Upload File</label>
+        <label><input type="radio" name="customizerSource-{{ section.id }}" value="template"> Select From Gallery</label>
       </div> 
 
       <div id="CustomizerUploadBlock-{{ section.id }}">
-        <label for="CustomizerUploadInput-{{ section.id }}">Image Upload</label>
+        <label for="CustomizerUploadInput-{{ section.id }}">File Upload</label>
         <input id="CustomizerUploadInput-{{ section.id }}" type="file" accept="image/*">
       </div>
 
-      <button type="button" id="CustomizerOpenTemplatePicker-{{ section.id }}" class="btn image-customizer-tool__template-btn image-customizer-tool__hidden">Open template library</button>
+      <button type="button" id="CustomizerOpenTemplatePicker-{{ section.id }}" class="btn image-customizer-tool__template-btn image-customizer-tool__hidden">Browse Gallery</button>
 
       <div class="image-customizer-tool__scale">
         <label for="CustomizerScale-{{ section.id }}">
-          Adjust Scale (zoom):
+          Adjust Scale:
           <span id="CustomizerScaleValue-{{ section.id }}">12.00 X 12.00in</span>
         </label>
         <input id="CustomizerScale-{{ section.id }}" type="range" min="0.1" max="58" step="0.01" value="12">
       </div>
 
       <div class="image-customizer-tool__row">
-        <span>Preview size</span>
+        <label>Preview Size</label>
         <div id="CustomizerSizes-{{ section.id }}" class="image-customizer-tool__sizes">
           <label><input type="radio" name="customizerSize-{{ section.id }}" value="12x12" checked> 12×12</label>
           <label><input type="radio" name="customizerSize-{{ section.id }}" value="58x36"> 58×36</label>
@@ -101,7 +101,7 @@
     <div class="image-customizer-tool__modal-backdrop" data-customizer-close-modal></div>
     <div class="image-customizer-tool__modal-panel" role="dialog" aria-modal="true" aria-label="Template image library">
       <div class="image-customizer-tool__modal-header">
-        <h3>Template library</h3>
+        <h3>BBSS Co. Gallery</h3>
         <button type="button" data-customizer-close-modal aria-label="Close">X</button>
       </div>
       <div class="image-customizer-tool__modal-toolbar">
