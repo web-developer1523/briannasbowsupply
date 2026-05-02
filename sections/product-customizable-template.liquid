@@ -167,43 +167,22 @@
 
           {% endform %}
 
+          {% comment %}
+            Combines design_library + design_library_2: for each field index 1..100, all entries from library 1, then all from library 2.
+            snippets/design-library-gallery-array.liquid (combined metaobjects; single-scope Liquid, valid JSON).
+          {% endcomment %}
+          {% assign gallery_metaobject_empty = '' | split: '__EMPTY_ARRAY__' %}
           {% assign design_library_entries = shop.metaobjects.design_library.values %}
-          {% if design_library_entries != blank %}
+          {% assign design_library_2_entries = shop.metaobjects.design_library_2.values %}
+          {% unless design_library_entries %}
+            {% assign design_library_entries = gallery_metaobject_empty %}
+          {% endunless %}
+          {% unless design_library_2_entries %}
+            {% assign design_library_2_entries = gallery_metaobject_empty %}
+          {% endunless %}
+          {% if design_library_entries.size > 0 or design_library_2_entries.size > 0 %}
             <script type="application/json" id="TemplateLibraryJson-{{ section.id }}">
-              [
-                {% assign first_item = true %}
-                {% assign seen_urls = '|' %}
-                {% for image_index in (1..100) %}
-                  {% for design_entry in design_library_entries %}
-                    {% if image_index == 1 %}
-                      {% assign entry_images = design_entry.images_1.value | default: design_entry.images_1 %}
-                      {% if entry_images == blank %}
-                        {% assign entry_images = design_entry.images.value | default: design_entry.images %}
-                      {% endif %}
-                    {% else %}
-                      {% assign image_key = 'images_' | append: image_index %}
-                      {% assign entry_images = design_entry[image_key].value | default: design_entry[image_key] %}
-                    {% endif %}
-                    {% if entry_images != blank %}
-                      {% for template_file in entry_images %}
-                        {% assign template_url = template_file.url | default: template_file.preview_image | image_url %}
-                        {% if template_url != blank %}
-                          {% assign seen_key = '|' | append: template_url | append: '|' %}
-                          {% unless seen_urls contains seen_key %}
-                            {% unless first_item %},{% endunless %}
-                            {
-                              "url": {{ template_url | json }},
-                              "alt": {{ template_file.alt | default: template_file.filename | default: design_entry.display_name | default: 'Template image' | json }}
-                            }
-                            {% assign first_item = false %}
-                            {% assign seen_urls = seen_urls | append: template_url | append: '|' %}
-                          {% endunless %}
-                        {% endif %}
-                      {% endfor %}
-                    {% endif %}
-                  {% endfor %}
-                {% endfor %}
-              ]
+              {% render 'design-library-gallery-array', design_library_entries: design_library_entries, design_library_2_entries: design_library_2_entries %}
             </script>
           {% endif %}
 

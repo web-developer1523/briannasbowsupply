@@ -25,7 +25,7 @@
     "type_base_size": "15px",
     "type_button_base_size": "14px",
     "type_navigation_base_size": "16px",
-    "cart_enable_ajax": true,
+    "cart_enable_ajax": false,
     "show_breadcrumb_nav": true,
     "share_image": "shopify://shop_images/Brianna_s_Bow_Supply_Shoppe_1_ca6458bd-468d-4bab-aad7-a8bfb9cc604c.png",
     "social_facebook_link": "",
@@ -73,7 +73,7 @@
             "type": "text",
             "settings": {
               "title": "Contact us",
-              "richtext": "<p>customercare.bbss@gmail.com</p>"
+              "richtext": "<p>care.bbssco@gmail.com</p>"
             }
           }
         },
@@ -91,7 +91,7 @@
           "logo_max_width": "600",
           "show_announcement": true,
           "home_page_only": false,
-          "announcement_text": "Processing times are 4-5 business days for print-on-demand and custom fabric orders. There is a 1-2 business day processing time for custom fabric with a $5 rush fee per yard. TAT starts the next day after placing your order. Please note that weekends and holidays do not count as business days. Enjoy FREE SHIPPING on all orders of $150 or more! For inquiries, please email us at customercare.bbss@gmail.com.",
+          "announcement_text": "Processing times are 4-5 business days for print-on-demand and custom fabric orders. There is a 1-2 business day processing time for custom fabric with a $5 rush fee per yard. TAT starts the next day after placing your order. Please note that weekends and holidays do not count as business days. Enjoy FREE SHIPPING on all orders of $150 or more! For inquiries, please email us at care.bbssco@gmail.com.",
           "announcement_link": "",
           "tagline": ""
         }
@@ -144,6 +144,20 @@
           "font-family": "inherit",
           "product-page-alignment": "auto",
           "cart-page-alignment": "auto"
+        }
+      },
+      "product-customizable-template": {
+        "type": "product-customizable-template",
+        "settings": {
+          "product_quantity_enable": false,
+          "vendor_show": false,
+          "social_sharing_products": true,
+          "product_description_position": "below",
+          "show_extra_tab": false,
+          "extra_tab_content": "",
+          "product_image_zoom_type": "lightbox",
+          "enable_payment_button": true,
+          "add_to_cart_width": "regular"
         }
       }
     },

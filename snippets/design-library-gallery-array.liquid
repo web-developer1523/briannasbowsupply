@@ -1,0 +1,159 @@
+{% comment %}
+  JSON array for BBSS gallery.
+  Params: design_library_entries, design_library_2_entries; optional image_width.
+  Do not concat different metaobject entry types — Shopify concat can yield empty arrays.
+  Two sequential loops: library 1 entries, then library 2 entries (same field index order).
+  Use bracket keys only (e.g. ['Images_41']) — avoids Liquid errors on mixed metaobject shapes.
+{% endcomment %}
+[
+{% assign first_item = true %}
+{% assign seen_urls = '|' %}
+{% for image_index in (1..100) %}
+  {% for design_entry in design_library_entries %}
+    {% assign entry_images = nil %}
+    {% assign prefix_list = 'images_|Images_|Image_|image_' | split: '|' %}
+    {% for pr in prefix_list %}
+      {% if entry_images == blank %}
+        {% assign field_key = pr | append: image_index %}
+        {% assign entry_images = design_entry[field_key].value | default: design_entry[field_key] %}
+      {% endif %}
+    {% endfor %}
+    {% if image_index == 1 and entry_images == blank %}
+      {% assign entry_images = design_entry['images'].value | default: design_entry['images'] %}
+    {% endif %}
+    {% if image_index == 1 and entry_images == blank %}
+      {% assign entry_images = design_entry['images_1'].value | default: design_entry['images_1'] %}
+    {% endif %}
+    {% if image_index == 1 and entry_images == blank %}
+      {% assign entry_images = design_entry['Images_1'].value | default: design_entry['Images_1'] %}
+    {% endif %}
+    {% if image_index == 41 and entry_images == blank %}
+      {% assign entry_images = design_entry['Images_41'].value | default: design_entry['Images_41'] %}
+    {% endif %}
+    {% if image_index == 41 and entry_images == blank %}
+      {% assign entry_images = design_entry['images_41'].value | default: design_entry['images_41'] %}
+    {% endif %}
+    {% if image_index == 41 and entry_images == blank %}
+      {% assign entry_images = design_entry['Image_41'].value | default: design_entry['Image_41'] %}
+    {% endif %}
+    {% if entry_images != blank %}
+      {% assign emitted_count = 0 %}
+      {% for template_file in entry_images %}
+        {% assign emitted_count = emitted_count | plus: 1 %}
+        {% if image_width != blank %}
+          {% assign template_url = template_file.url | default: template_file.preview_image | image_url: width: image_width %}
+        {% else %}
+          {% assign template_url = template_file.url | default: template_file.preview_image | image_url %}
+        {% endif %}
+        {% if template_url != blank %}
+          {% assign seen_key = '|' | append: template_url | append: '|' %}
+          {% unless seen_urls contains seen_key %}
+            {% unless first_item %},{% endunless %}
+            {
+              "url": {{ template_url | json }},
+              "alt": {{ template_file.alt | default: template_file.filename | default: design_entry.display_name | default: 'Template image' | json }}
+            }
+            {% assign first_item = false %}
+            {% assign seen_urls = seen_urls | append: template_url | append: '|' %}
+          {% endunless %}
+        {% endif %}
+      {% endfor %}
+      {% if emitted_count == 0 %}
+        {% if entry_images.url != blank or entry_images.preview_image != blank %}
+          {% assign template_file = entry_images %}
+          {% if image_width != blank %}
+            {% assign template_url = template_file.url | default: template_file.preview_image | image_url: width: image_width %}
+          {% else %}
+            {% assign template_url = template_file.url | default: template_file.preview_image | image_url %}
+          {% endif %}
+          {% if template_url != blank %}
+            {% assign seen_key = '|' | append: template_url | append: '|' %}
+            {% unless seen_urls contains seen_key %}
+              {% unless first_item %},{% endunless %}
+              {
+                "url": {{ template_url | json }},
+                "alt": {{ template_file.alt | default: template_file.filename | default: design_entry.display_name | default: 'Template image' | json }}
+              }
+              {% assign first_item = false %}
+              {% assign seen_urls = seen_urls | append: template_url | append: '|' %}
+            {% endunless %}
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+  {% for design_entry in design_library_2_entries %}
+    {% assign entry_images = nil %}
+    {% assign prefix_list = 'images_|Images_|Image_|image_' | split: '|' %}
+    {% for pr in prefix_list %}
+      {% if entry_images == blank %}
+        {% assign field_key = pr | append: image_index %}
+        {% assign entry_images = design_entry[field_key].value | default: design_entry[field_key] %}
+      {% endif %}
+    {% endfor %}
+    {% if image_index == 1 and entry_images == blank %}
+      {% assign entry_images = design_entry['images'].value | default: design_entry['images'] %}
+    {% endif %}
+    {% if image_index == 1 and entry_images == blank %}
+      {% assign entry_images = design_entry['images_1'].value | default: design_entry['images_1'] %}
+    {% endif %}
+    {% if image_index == 1 and entry_images == blank %}
+      {% assign entry_images = design_entry['Images_1'].value | default: design_entry['Images_1'] %}
+    {% endif %}
+    {% if image_index == 41 and entry_images == blank %}
+      {% assign entry_images = design_entry['Images_41'].value | default: design_entry['Images_41'] %}
+    {% endif %}
+    {% if image_index == 41 and entry_images == blank %}
+      {% assign entry_images = design_entry['images_41'].value | default: design_entry['images_41'] %}
+    {% endif %}
+    {% if image_index == 41 and entry_images == blank %}
+      {% assign entry_images = design_entry['Image_41'].value | default: design_entry['Image_41'] %}
+    {% endif %}
+    {% if entry_images != blank %}
+      {% assign emitted_count = 0 %}
+      {% for template_file in entry_images %}
+        {% assign emitted_count = emitted_count | plus: 1 %}
+        {% if image_width != blank %}
+          {% assign template_url = template_file.url | default: template_file.preview_image | image_url: width: image_width %}
+        {% else %}
+          {% assign template_url = template_file.url | default: template_file.preview_image | image_url %}
+        {% endif %}
+        {% if template_url != blank %}
+          {% assign seen_key = '|' | append: template_url | append: '|' %}
+          {% unless seen_urls contains seen_key %}
+            {% unless first_item %},{% endunless %}
+            {
+              "url": {{ template_url | json }},
+              "alt": {{ template_file.alt | default: template_file.filename | default: design_entry.display_name | default: 'Template image' | json }}
+            }
+            {% assign first_item = false %}
+            {% assign seen_urls = seen_urls | append: template_url | append: '|' %}
+          {% endunless %}
+        {% endif %}
+      {% endfor %}
+      {% if emitted_count == 0 %}
+        {% if entry_images.url != blank or entry_images.preview_image != blank %}
+          {% assign template_file = entry_images %}
+          {% if image_width != blank %}
+            {% assign template_url = template_file.url | default: template_file.preview_image | image_url: width: image_width %}
+          {% else %}
+            {% assign template_url = template_file.url | default: template_file.preview_image | image_url %}
+          {% endif %}
+          {% if template_url != blank %}
+            {% assign seen_key = '|' | append: template_url | append: '|' %}
+            {% unless seen_urls contains seen_key %}
+              {% unless first_item %},{% endunless %}
+              {
+                "url": {{ template_url | json }},
+                "alt": {{ template_file.alt | default: template_file.filename | default: design_entry.display_name | default: 'Template image' | json }}
+              }
+              {% assign first_item = false %}
+              {% assign seen_urls = seen_urls | append: template_url | append: '|' %}
+            {% endunless %}
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+]

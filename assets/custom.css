@@ -360,3 +360,5 @@
     margin: 0 auto;
 }
 }
+
+#more-payment-options-link > .sp-dynamic-checkout-button-secondary { display: none !important; }
