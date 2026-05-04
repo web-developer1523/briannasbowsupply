@@ -21,7 +21,9 @@
         <label><input type="radio" name="customizerSource-{{ section.id }}" value="upload" checked> Upload File</label>
         <label><input type="radio" name="customizerSource-{{ section.id }}" value="template"> Select From Gallery</label>
       </div> 
-
+      <p class="video-help-trigger">
+        Need help? <a href="#" id="openTutorial">Watch quick tutorial</a>
+      </p>
       <div id="CustomizerUploadBlock-{{ section.id }}">
         <label for="CustomizerUploadInput-{{ section.id }}">File Upload</label>
         <input id="CustomizerUploadInput-{{ section.id }}" type="file" accept="image/*">
@@ -37,7 +39,7 @@
         <input id="CustomizerScale-{{ section.id }}" type="range" min="0.1" max="58" step="0.01" value="12">
       </div>
 
-      <div class="image-customizer-tool__row">
+      <div class="image-customizer-tool__row" style="display: none;">
         <label>Preview Size</label>
         <div id="CustomizerSizes-{{ section.id }}" class="image-customizer-tool__sizes">
           <label><input type="radio" name="customizerSize-{{ section.id }}" value="12x12" checked> 12×12</label>
@@ -92,6 +94,120 @@
       <p id="CustomizerTemplateEmpty-{{ section.id }}" class="image-customizer-tool__template-empty image-customizer-tool__hidden">No template images found.</p>
     </div>
   </div>
+      {% comment %} popup {% endcomment %}
+      <div id="videoTutorialModal" class="video-modal hidden">
+        <div class="video-modal__backdrop" id="closeVideoModal"></div>
+      
+        <div class="video-modal__content">
+          <button class="video-modal__close" id="closeVideoBtn">✕</button>
+      
+          <div class="video-modal__iframe-wrap">
+            <iframe 
+              id="videoIframe"
+              src=""
+              title="Tutorial Video"
+              frameborder="0"
+              allow="autoplay; encrypted-media"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      </div>
+      <style>
+        .video-modal {
+          position: fixed;
+          inset: 0;
+          z-index: 999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .video-modal.hidden {
+          display: none;
+        }
+        
+        .video-modal__backdrop {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.6);
+        }
+        
+        .video-modal__content {
+          position: relative;
+          width: 90%;
+          max-width: 980px;
+          background: #000;
+          border-radius: 10px;
+          overflow: hidden;
+          z-index: 2;
+        }
+        
+        .video-modal__iframe-wrap {
+          position: relative;
+          padding-top: 56.25%; /* 16:9 */
+        }
+        
+        .video-modal__iframe-wrap iframe {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+        }
+        
+        .video-modal__close {
+          position: absolute;
+          top: 8px;
+          right: 4px;
+          z-index: 3;
+          background: #fff;
+          border: none;
+          font-size: 14px;
+          cursor: pointer;
+          padding: 4px 8px;
+          border-radius: 6px;
+          font-weight: 800;
+        }
+      </style>
+      <script>
+        var openTutorialBtn = document.getElementById('openTutorial');
+        var videoModal = document.getElementById('videoTutorialModal');
+        var closeVideoModal = document.getElementById('closeVideoModal');
+        var closeVideoBtn = document.getElementById('closeVideoBtn');
+        var videoIframe = document.getElementById('videoIframe');
+        
+        var YOUTUBE_URL = "https://www.youtube.com/embed/zDPsALsSWfk?autoplay=1";
+        
+        // Open modal
+        if (openTutorialBtn) {
+          openTutorialBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            videoModal.classList.remove('hidden');
+            videoIframe.src = YOUTUBE_URL;
+          });
+        }
+        
+        // Close modal
+        function closeVideo() {
+          videoModal.classList.add('hidden');
+          videoIframe.src = ""; // stop video
+        }
+        
+        if (closeVideoModal) {
+          closeVideoModal.addEventListener('click', closeVideo);
+        }
+        
+        if (closeVideoBtn) {
+          closeVideoBtn.addEventListener('click', closeVideo);
+        }
+        
+        // ESC key support
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') {
+            closeVideo();
+          }
+        });
+      </script>
 </div>
 
 <style>
@@ -282,7 +398,8 @@
     }
 
     function getScaleSliderMax() {
-      return isFullYardCanvas() ? 58 : 12;
+      {% comment %} return isFullYardCanvas() ? 58 : 12; {% endcomment %}
+       return 56;
     }
 
     function getDefaultPrintWidthInches() {

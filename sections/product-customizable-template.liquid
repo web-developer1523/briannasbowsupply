@@ -29,6 +29,9 @@
           <button type="button" class="preview-zoom-bar__btn" id="previewZoomIn-{{ section.id }}" aria-label="Zoom in">+</button>
         </div>
       </div>
+      <p class="video-help-trigger" style="margin-top: 30px;">
+        Need help? <a href="#" id="openTutorial">Watch quick tutorial</a>
+      </p>
     </div>
 
     <div class="grid__item medium-up--one-half{% if product.images.size == 0%} medium-up--push-one-half{% endif %}">
@@ -106,8 +109,11 @@
             
               <button type="button" id="OpenTemplatePicker-{{ section.id }}" class="btn image-source-button">Browse Gallery</button>
               <input type="hidden" id="ImageSource-{{ section.id }}" name="properties[Image_Source]" value="Uploaded image">
-              <input type="hidden" id="TemplateImage-{{ section.id }}" value="">
+              <input type="hidden" id="TemplateImage-{{ section.id }}" name="properties[Template_Image]" value="">
             </div>
+            {% comment %} <p class="video-help-trigger">
+              Need help? <a href="#" id="openTutorial">Watch quick tutorial</a>
+            </p> {% endcomment %}
             <div id="uploadery-container"></div>
             <div class="custom-controls card">
               {% comment %} <h2 class="heading">Controls</h2> {% endcomment %}
@@ -123,7 +129,7 @@
                   <input class="scale-control__slider" id="scaleSlider-{{ section.id }}" type="range" min="0.1" max="58" step="0.01" value="12">
                 </div>
 
-                <div class="row">
+                <div class="row" style="display: none;">
                   <label>Preview Size</label>
                   <div class="size-options" id="sizeOptions-{{ section.id }}">
                     <label><input type="radio" name="canvasSize-{{ section.id }}" value="12x12" checked> 12×12</label>
@@ -219,7 +225,120 @@
         {% endif %}
       </div>
     </div>
-
+    {% comment %} popup {% endcomment %}
+    <div id="videoTutorialModal" class="video-modal hidden">
+      <div class="video-modal__backdrop" id="closeVideoModal"></div>
+    
+      <div class="video-modal__content">
+        <button class="video-modal__close" id="closeVideoBtn">✕</button>
+    
+        <div class="video-modal__iframe-wrap">
+          <iframe 
+            id="videoIframe"
+            src=""
+            title="Tutorial Video"
+            frameborder="0"
+            allow="autoplay; encrypted-media"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    </div>
+    <style>
+      .video-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .video-modal.hidden {
+        display: none;
+      }
+      
+      .video-modal__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+      }
+      
+      .video-modal__content {
+        position: relative;
+        width: 90%;
+        max-width: 980px;
+        background: #000;
+        border-radius: 10px;
+        overflow: hidden;
+        z-index: 2;
+      }
+      
+      .video-modal__iframe-wrap {
+        position: relative;
+        padding-top: 56.25%; /* 16:9 */
+      }
+      
+      .video-modal__iframe-wrap iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      
+      .video-modal__close {
+        position: absolute;
+        top: 8px;
+        right: 4px;
+        z-index: 3;
+        background: #fff;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 800;
+      }
+    </style>
+    <script>
+      var openTutorialBtn = document.getElementById('openTutorial');
+      var videoModal = document.getElementById('videoTutorialModal');
+      var closeVideoModal = document.getElementById('closeVideoModal');
+      var closeVideoBtn = document.getElementById('closeVideoBtn');
+      var videoIframe = document.getElementById('videoIframe');
+      
+      var YOUTUBE_URL = "https://www.youtube.com/embed/zDPsALsSWfk?autoplay=1";
+      
+      // Open modal
+      if (openTutorialBtn) {
+        openTutorialBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          videoModal.classList.remove('hidden');
+          videoIframe.src = YOUTUBE_URL;
+        });
+      }
+      
+      // Close modal
+      function closeVideo() {
+        videoModal.classList.add('hidden');
+        videoIframe.src = ""; // stop video
+      }
+      
+      if (closeVideoModal) {
+        closeVideoModal.addEventListener('click', closeVideo);
+      }
+      
+      if (closeVideoBtn) {
+        closeVideoBtn.addEventListener('click', closeVideo);
+      }
+      
+      // ESC key support
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeVideo();
+        }
+      });
+    </script>
   </div>
 
   {% if section.settings.product_description_position == 'below' %}
@@ -710,7 +829,8 @@
     var previewZoomPercent = 100;
 
     function getScaleSliderMax() {
-      return isFullYardCanvas() ? 58 : 12;
+      {% comment %} return isFullYardCanvas() ? 58 : 12; {% endcomment %}
+      return 56;
     }
 
     function getDefaultPrintWidthInches() {
@@ -913,11 +1033,26 @@
 
     function applyTemplateImageSelection(url, altText) {
       if (!url) return;
+    
       var templateSourceRadio = productSection.querySelector('input[name="imageSource-' + sectionId + '"][value="template"]');
       if (templateSourceRadio) templateSourceRadio.checked = true;
+    
       updateImageSourceUI('template');
       setImageSourceProperty('Template image');
+    
+      // ✅ SET TEMPLATE VALUE
       if (templateImagePropertyInput) templateImagePropertyInput.value = altText || url;
+    
+      // ✅ CLEAR UPLOADED IMAGE (IMPORTANT)
+      if (canonicalImageField) {
+        canonicalImageField.value = '';
+      }
+    
+      // OPTIONAL: also clear detected upload input
+      if (uploadedImageInput) {
+        uploadedImageInput.value = '';
+      }
+    
       setImageUrlOnField(url);
       loadImageFromUrl(url);
       closeTemplateModal();
@@ -1257,7 +1392,18 @@
     }
 
     function tryLoadFromHiddenInput() {
-      if (getCurrentImageSourceSelection() !== 'upload') return;
+      if (uploadedImageInput && form) {
+        var canonical = form.querySelector('[name="properties[Uploaded_Image]"]');
+        var canonicalUrl = canonical ? (canonical.value || '').trim() : '';
+        var detectedUrl = getUploadImageUrlFromField(uploadedImageInput);
+      
+        // ❌ ADD THIS CONDITION
+        if (getCurrentImageSourceSelection() !== 'upload') return;
+      
+        if (canonical && detectedUrl && canonicalUrl !== detectedUrl) {
+          canonical.value = detectedUrl;
+        }
+      }
       syncUploadedImageField();
       if (!uploadedImageInput) return;
       var url = getUploadImageUrlFromField(uploadedImageInput);
@@ -1469,9 +1615,24 @@
 
     // Delegate for dynamically updated DOM.
     productSection.addEventListener('change', function(event) {
-      handleSizeSelection(event.target);
-      syncSizeFromCheckedRadio();
-    }, true);
+      var target = event.target;
+      if (!target || target.name !== ('imageSource-' + sectionId)) return;
+    
+      if (target.value === 'upload') {
+        updateImageSourceUI('upload');
+        setImageSourceProperty('Uploaded image');
+    
+        // ✅ CLEAR TEMPLATE IMAGE
+        if (templateImagePropertyInput) {
+          templateImagePropertyInput.value = '';
+        }
+    
+      } else if (target.value === 'template') {
+        updateImageSourceUI('template');
+        setImageSourceProperty('Template image');
+        openTemplateModal();
+      }
+    });
     productSection.addEventListener('click', function(event) {
       handleSizeSelection(event.target);
       setTimeout(syncSizeFromCheckedRadio, 0);

@@ -36,15 +36,16 @@
                 <td class="cart__table-cell--image small--text-center">
                   {% if custom_image != blank %}
                     <!-- Show uploaded image -->
-                    <a href="{{ item.url | within: collections.all }}">
-                      <img
-                        id="{{ img_id }}"
-                        src="{{ custom_image }}"
-                        alt="Custom uploaded image"
-                        class="cart_upload_img"
-                      >
-                    </a>
-
+                    <div id="{{ wrapper_id }}" class="cart__image-wrapper supports-js">
+                      <a class="cart__image-container" href="{{ item.url | within: collections.all }}" style="padding-top:{{ 1 | divided_by: item.image.aspect_ratio | times: 100}}%;"> 
+                        <img
+                          id="{{ img_id }}"
+                          src="{{ custom_image }}"
+                          alt="Custom uploaded image"
+                          class="cart_upload_img cart__image lazyload"
+                        >
+                      </a>
+                    </div>
                   {% elsif item.image != blank %}
                     <!-- Default product image -->
                     {%- assign img_url = item.image | img_url: '1x1' | replace: '_1x1.', '_{width}x.' -%}
