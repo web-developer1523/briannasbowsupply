@@ -1,0 +1,14 @@
+{
+  "name": "briannasbowsupply-theme",
+  "private": true,
+  "scripts": {
+    "shopify": "shopify",
+    "theme:push": "shopify theme push",
+    "theme:pull": "shopify theme pull",
+    "theme:dev": "shopify theme dev",
+    "auth:login": "shopify auth login"
+  },
+  "devDependencies": {
+    "@shopify/cli": "^4.1.0"
+  }
+}

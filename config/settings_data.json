@@ -149,7 +149,7 @@
       "product-customizable-template": {
         "type": "product-customizable-template",
         "settings": {
-          "product_quantity_enable": false,
+          "product_quantity_enable": true,
           "vendor_show": false,
           "social_sharing_products": true,
           "product_description_position": "below",

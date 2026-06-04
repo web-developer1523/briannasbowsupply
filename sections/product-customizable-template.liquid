@@ -87,24 +87,66 @@
                 </select>
               {% endif %}
             {% endfor %} {% endcomment %}
-             <select name="id" id="ProductSelect-{{ section.id }}" class="product-single__variants">
+            {% comment %}
+              Dropdown variant picker (restore if needed):
+              <select name="id" id="ProductSelect-{{ section.id }}" class="product-single__variants">
+                {% for variant in product.variants %}
+                  {% if variant.available %}
+                    <option {% if variant == product.selected_or_first_available_variant %} selected="selected" {% endif %} data-sku="{{ variant.sku }}" value="{{ variant.id }}">{{ variant.title }} - {{ variant.price | money_with_currency }}</option>
+                  {% else %}
+                    <option disabled="disabled">
+                      {{ variant.title }} - {{ 'products.product.sold_out' | t }}
+                    </option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            {% endcomment %}
+
+            {% if product.variants.size > 1 %}
+              <div class="variant-picker" id="VariantPicker-{{ section.id }}">
+                {% if product.options.size == 1 and product.options.first != 'Title' %}
+                  <p class="variant-picker__label">{{ product.options.first }}</p>
+                {% else %}
+                  <p class="variant-picker__label">Options</p>
+                {% endif %}
+                <div class="variant-picker__options" role="group">
+                  {% for variant in product.variants %}
+                    <button
+                      type="button"
+                      class="variant-picker__button{% if variant == current_variant %} is-selected{% endif %}{% unless variant.available %} is-unavailable{% endunless %}"
+                      data-variant-id="{{ variant.id }}"
+                      data-sku="{{ variant.sku }}"
+                      data-available="{{ variant.available }}"
+                      {% unless variant.available %}disabled{% endunless %}
+                    >
+                      <span class="variant-picker__title">{{ variant.title }}</span>
+                      {% comment %} {% if variant.available %}
+                        <span class="variant-picker__price">{{ variant.price | money_with_currency }}</span>
+                      {% else %}
+                        <span class="variant-picker__status">{{ 'products.product.sold_out' | t }}</span>
+                      {% endif %} {% endcomment %}
+                    </button>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            <select id="ProductSelect-{{ section.id }}" class="product-single__variants" aria-hidden="true" tabindex="-1">
               {% for variant in product.variants %}
                 {% if variant.available %}
-                  <option {% if variant == product.selected_or_first_available_variant %} selected="selected" {% endif %} data-sku="{{ variant.sku }}" value="{{ variant.id }}">{{ variant.title }} - {{ variant.price | money_with_currency }}</option>
+                  <option {% if variant == current_variant %} selected="selected" {% endif %} data-sku="{{ variant.sku }}" value="{{ variant.id }}">{{ variant.title }}</option>
                 {% else %}
-                  <option disabled="disabled">
-                    {{ variant.title }} - {{ 'products.product.sold_out' | t }}
-                  </option>
+                  <option disabled="disabled" value="{{ variant.id }}">{{ variant.title }}</option>
                 {% endif %}
               {% endfor %}
-            </select> 
+            </select>
 
 
 
             <div class="image-source-controls">
-              <div class="image-source-options">
-                <label><input type="radio" name="imageSource-{{ section.id }}" value="upload" checked> Upload File</label>
-                <label><input type="radio" name="imageSource-{{ section.id }}" value="template"> Select From Gallery</label>
+              <div class="image-source-options" role="group" aria-label="Image source">
+                <button type="button" class="image-source-option is-active" data-image-source="upload" aria-pressed="true">Upload File</button>
+                <button type="button" class="image-source-option" data-image-source="template" aria-pressed="false">Select From Gallery</button>
               </div>
             
               <button type="button" id="OpenTemplatePicker-{{ section.id }}" class="btn image-source-button">Browse Gallery</button>
@@ -115,7 +157,25 @@
               Need help? <a href="#" id="openTutorial">Watch quick tutorial</a>
             </p> {% endcomment %}
             <div id="uploadery-container"></div>
-            <div class="custom-controls card">
+
+              <div class="scaling-mode-controls">
+                <label class="scaling-mode-controls__label">How would you like to set scaling?</label>
+                <div class="scaling-mode-options" role="group" aria-label="Scaling method">
+                  <button type="button" class="scaling-mode-option is-active" data-scaling-mode="tool" aria-pressed="true">Scaling Tool</button>
+                  <button type="button" class="scaling-mode-option" data-scaling-mode="choose" aria-pressed="false">Choose your scaling</button>
+                </div>
+                <input type="hidden" name="properties[Scaling Method]" id="ScalingMethod-{{ section.id }}" value="Scaling Tool">
+                <div id="ChooseScalingPanel-{{ section.id }}" class="choose-scaling-panel line-item-property__field is-hidden" aria-hidden="true">
+                {% comment %} <label class="choose-scaling-panel__label">Choose your scaling (required)</label> {% endcomment %}
+                <div class="choose-scaling-options">
+                  <label class="choose-scaling-option"><input type="radio" class="choose-scaling-radio" name="properties[Choose your scale (required)]" value="Printer's Choice (I make bows)" disabled> <span>Printer's Choice (I make bows)</span></label>
+                  <label class="choose-scaling-option"><input type="radio" class="choose-scaling-radio" name="properties[Choose your scale (required)]" value="Printer's Choice (I make bows and clothes)" disabled> <span>Printer's Choice (I make bows and clothes)</span></label>
+                  <label class="choose-scaling-option"><input type="radio" class="choose-scaling-radio" name="properties[Choose your scale (required)]" value="Printer's Choice (I make clothes)" disabled> <span>Printer's Choice (I make clothes)</span></label>
+                </div>
+              </div>
+            </div>
+
+            <div id="ScalingToolPanel-{{ section.id }}" class="scaling-tool-panel custom-controls card">
               {% comment %} <h2 class="heading">Controls</h2> {% endcomment %}
               <div class="controls">
                 <input type="hidden" name="properties[Canvas_Size]" id="CanvasSize-{{ section.id }}" value="12x12">
@@ -154,6 +214,7 @@
                 Image is loaded from your uploaded file URL. Size changes canvas ratio, scale zooms the image, and low scale repeats the image.
               </p> {% endcomment %}
             </div>
+
 
             {% if section.settings.product_quantity_enable %}
               <div class="product-single__quantity">
@@ -373,9 +434,12 @@
   .size-options label{
     font-size: 16px;
   }
-  .image-source-options label {
+  .image-source-option {
     font-size: 16px;
-}
+  }
+  .scaling-mode-option {
+    font-size: 16px;
+  }
   {% comment %} #ProductSection[data-section-id="{{ section.id }}"] .card {
     background: #fff;
     border: 1px solid #ddd;
@@ -601,6 +665,76 @@
     font-weight: 700;
   }
 
+  #ProductSection[data-section-id="{{ section.id }}"] .selector-wrapper {
+    display: none !important;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker {
+    margin: 1rem 0;
+    border: 1px solid #d77cae;
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker__label {
+    margin: 0 0 10px;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker__button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 120px;
+    padding: 10px 14px;
+    border: 1px solid #bbbbbb96;
+    border-radius: 12px;
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker__button:hover:not(:disabled) {
+    border-color: #d77cae;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker__button.is-selected {
+    border-color: #d77cae;
+    background: rgba(215, 124, 174, 0.08);
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 4px 12px 0px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker__button.is-unavailable,
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker__button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker__title {
+    text-transform: capitalize;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker__price,
+  #ProductSection[data-section-id="{{ section.id }}"] .variant-picker__status {
+    font-size: 12px;
+  }
+
   #ProductSection[data-section-id="{{ section.id }}"] .image-source-controls {
     margin: 12px 0;
     display: grid;
@@ -615,16 +749,99 @@
     font-size: 14px;
   }
 
-  #ProductSection[data-section-id="{{ section.id }}"] .image-source-options label {
+  #ProductSection[data-section-id="{{ section.id }}"] .image-source-option {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
     cursor: pointer;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid #bbbbbb96;
+    padding: 7px 12px;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .image-source-option.is-active {
+    border-color: #d77cae;
+    box-shadow: inset 0 0 0 1px #d77cae;
   }
 
   #ProductSection[data-section-id="{{ section.id }}"] .image-source-button {
     width: fit-content;
     padding: 8px 12px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .scaling-mode-controls {
+    margin: 12px 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .scaling-mode-controls__label {
+    display: block;
+    margin: 0;
+    color: #621329;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: normal;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .scaling-mode-options {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .scaling-mode-option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid #bbbbbb96;
+    padding: 7px 12px;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .scaling-mode-option.is-active {
+    border-color: #d77cae;
+    box-shadow: inset 0 0 0 1px #d77cae;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .choose-scaling-panel {
+    margin: 12px 0;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .choose-scaling-panel__label {
+    display: block;
+    margin: 0 0 10px;
+    color: #621329;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: normal;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .choose-scaling-options {
+    display: grid;
+    gap: 8px;
+  }
+
+  #ProductSection[data-section-id="{{ section.id }}"] .choose-scaling-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 0;
   }
 
   #ProductSection[data-section-id="{{ section.id }}"] .is-hidden {
@@ -805,8 +1022,73 @@
     var templateImagePropertyInput = document.getElementById('TemplateImage-' + sectionId);
     var variantIdInput = document.getElementById('ProductVariantId-' + sectionId);
     var templateLibraryScript = document.getElementById('TemplateLibraryJson-' + sectionId);
+    var scalingMethodInput = document.getElementById('ScalingMethod-' + sectionId);
+    var scalingToolPanel = document.getElementById('ScalingToolPanel-' + sectionId);
+    var chooseScalingPanel = document.getElementById('ChooseScalingPanel-' + sectionId);
+    var chooseScalingRadios = chooseScalingPanel
+      ? chooseScalingPanel.querySelectorAll('.choose-scaling-radio')
+      : [];
 
     if (!canvas || !topRulerCanvas || !leftRulerCanvas || !previewWrap || !previewFrame || !scaleSlider || !sizeOptions || !widthInput || !heightInput) return;
+
+    function setScalingModeSelection(mode) {
+      var options = productSection.querySelectorAll('.scaling-mode-option[data-scaling-mode]');
+      var idx;
+      for (idx = 0; idx < options.length; idx++) {
+        var option = options[idx];
+        var isSelected = option.getAttribute('data-scaling-mode') === mode;
+        option.classList.toggle('is-active', isSelected);
+        option.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+      }
+    }
+
+    function getScalingModeSelection() {
+      var selected = productSection.querySelector('.scaling-mode-option.is-active');
+      var mode = selected ? selected.getAttribute('data-scaling-mode') : 'tool';
+      return mode === 'choose' ? 'choose' : 'tool';
+    }
+
+    function handleScalingModeSelection(mode) {
+      updateScalingModeUI(mode === 'choose' ? 'choose' : 'tool');
+    }
+
+    function setChooseScalingRadiosEnabled(enabled) {
+      var i;
+      for (i = 0; i < chooseScalingRadios.length; i++) {
+        var radio = chooseScalingRadios[i];
+        radio.disabled = !enabled;
+        radio.required = enabled;
+        if (!enabled) {
+          radio.checked = false;
+        }
+      }
+    }
+
+    function setScalingToolInputsEnabled(enabled) {
+      if (scaleSlider) scaleSlider.disabled = !enabled;
+      if (widthInput) widthInput.disabled = !enabled;
+      if (heightInput) heightInput.disabled = !enabled;
+      if (canvasSizeInput) canvasSizeInput.disabled = !enabled;
+      if (canvasScaleInput) canvasScaleInput.disabled = !enabled;
+    }
+
+    function updateScalingModeUI(mode) {
+      setScalingModeSelection(mode === 'choose' ? 'choose' : 'tool');
+      var useTool = mode !== 'choose';
+      if (scalingMethodInput) {
+        scalingMethodInput.value = useTool ? 'Scaling Tool' : 'Choose your scaling';
+      }
+      if (scalingToolPanel) {
+        scalingToolPanel.classList.toggle('is-hidden', !useTool);
+        scalingToolPanel.setAttribute('aria-hidden', useTool ? 'false' : 'true');
+      }
+      if (chooseScalingPanel) {
+        chooseScalingPanel.classList.toggle('is-hidden', useTool);
+        chooseScalingPanel.setAttribute('aria-hidden', useTool ? 'true' : 'false');
+      }
+      setScalingToolInputsEnabled(useTool);
+      setChooseScalingRadiosEnabled(!useTool);
+    }
 
     var ctx = canvas.getContext('2d');
     var topRulerCtx = topRulerCanvas.getContext('2d');
@@ -1001,12 +1283,38 @@
       }
     }
 
+    function setImageSourceSelection(selectedSource) {
+      var options = productSection.querySelectorAll('.image-source-option[data-image-source]');
+      var idx;
+      for (idx = 0; idx < options.length; idx++) {
+        var option = options[idx];
+        var isSelected = option.getAttribute('data-image-source') === selectedSource;
+        option.classList.toggle('is-active', isSelected);
+        option.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+      }
+    }
+
     function getCurrentImageSourceSelection() {
-      var selected = productSection.querySelector('input[name="imageSource-' + sectionId + '"]:checked');
-      return selected ? selected.value : 'upload';
+      var selected = productSection.querySelector('.image-source-option.is-active');
+      return selected ? selected.getAttribute('data-image-source') : 'upload';
+    }
+
+    function handleImageSourceSelection(source) {
+      if (source === 'upload') {
+        updateImageSourceUI('upload');
+        setImageSourceProperty('Uploaded image');
+        if (templateImagePropertyInput) {
+          templateImagePropertyInput.value = '';
+        }
+      } else if (source === 'template') {
+        updateImageSourceUI('template');
+        setImageSourceProperty('Template image');
+        openTemplateModal();
+      }
     }
 
     function updateImageSourceUI(selectedSource) {
+      setImageSourceSelection(selectedSource);
       var useTemplate = selectedSource === 'template';
 
       if (uploaderyContainer) {
@@ -1033,9 +1341,6 @@
 
     function applyTemplateImageSelection(url, altText) {
       if (!url) return;
-    
-      var templateSourceRadio = productSection.querySelector('input[name="imageSource-' + sectionId + '"][value="template"]');
-      if (templateSourceRadio) templateSourceRadio.checked = true;
     
       updateImageSourceUI('template');
       setImageSourceProperty('Template image');
@@ -1426,13 +1731,32 @@
     renderTemplateGrid();
 
     // Force default source to upload on every fresh page load.
-    var defaultUploadSource = productSection.querySelector('input[name="imageSource-' + sectionId + '"][value="upload"]');
-    if (defaultUploadSource) {
-      defaultUploadSource.checked = true;
-    }
     setImageSourceProperty('Uploaded image');
     if (templateImagePropertyInput) templateImagePropertyInput.value = '';
     updateImageSourceUI('upload');
+
+    updateScalingModeUI('tool');
+
+    if (form) {
+      form.addEventListener('submit', function(event) {
+        if (getScalingModeSelection() !== 'choose') return;
+        var hasChoice = false;
+        var i;
+        for (i = 0; i < chooseScalingRadios.length; i++) {
+          if (chooseScalingRadios[i].checked) {
+            hasChoice = true;
+            break;
+          }
+        }
+        if (!hasChoice) {
+          event.preventDefault();
+          if (chooseScalingPanel) {
+            chooseScalingPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+          window.alert('Please choose your scaling before adding to cart.');
+        }
+      });
+    }
 
     if (openTemplatePickerButton) {
       openTemplatePickerButton.addEventListener('click', function() {
@@ -1470,11 +1794,145 @@
       });
     }
 
+    var variantPicker = document.getElementById('VariantPicker-' + sectionId);
+    var productSelect = document.getElementById('ProductSelect-' + sectionId);
+    var productJsonEl = document.getElementById('ProductJson-' + sectionId);
+    var productPriceEl = document.getElementById('ProductPrice');
+    var comparePriceEl = document.getElementById('ComparePrice');
+    var addToCartBtn = document.getElementById('AddToCart');
+    var addToCartText = document.getElementById('AddToCartText');
+    var shopifyPaymentButton = productSection.querySelector('.shopify-payment-button');
+    var productData = null;
+
+    if (productJsonEl) {
+      try {
+        productData = JSON.parse(productJsonEl.textContent);
+      } catch (e) {
+        productData = null;
+      }
+    }
+
+    function findVariantById(id) {
+      if (!productData || !productData.variants) return null;
+      var numericId = parseInt(id, 10);
+      var i;
+      for (i = 0; i < productData.variants.length; i++) {
+        if (productData.variants[i].id === numericId) {
+          return productData.variants[i];
+        }
+      }
+      return null;
+    }
+
+    var moneyFormat = {{ shop.money_format | json }};
+
+    function formatVariantMoney(cents) {
+      if (typeof Shopify !== 'undefined' && typeof Shopify.formatMoney === 'function') {
+        return Shopify.formatMoney(cents, (typeof theme !== 'undefined' && theme.moneyFormat) ? theme.moneyFormat : moneyFormat);
+      }
+      return (cents / 100).toFixed(2);
+    }
+
+    function updateVariantPickerButtons(selectedId) {
+      if (!variantPicker) return;
+      var buttons = variantPicker.querySelectorAll('.variant-picker__button');
+      var i;
+      for (i = 0; i < buttons.length; i++) {
+        var button = buttons[i];
+        var isSelected = String(button.getAttribute('data-variant-id')) === String(selectedId);
+        button.classList.toggle('is-selected', isSelected);
+      }
+    }
+
+    function dispatchVariantChange(variant) {
+      if (!variant || typeof productSection.dispatchEvent !== 'function') return;
+      try {
+        productSection.dispatchEvent(new CustomEvent('variantChange', {
+          detail: { variant: variant },
+          bubbles: true
+        }));
+      } catch (e) {
+        /* IE fallback not required */
+      }
+    }
+
+    function applySelectedVariant(variant) {
+      if (!variant) return;
+
+      if (variantIdInput) {
+        variantIdInput.value = String(variant.id);
+      }
+
+      if (productSelect) {
+        productSelect.value = String(variant.id);
+      }
+
+      updateVariantPickerButtons(variant.id);
+
+      if (productPriceEl) {
+        productPriceEl.textContent = formatVariantMoney(variant.price);
+        productPriceEl.setAttribute('content', (variant.price / 100).toFixed(2));
+        if (variant.compare_at_price && variant.compare_at_price > variant.price) {
+          productPriceEl.classList.add('product-single__price--on-sale');
+        } else {
+          productPriceEl.classList.remove('product-single__price--on-sale');
+        }
+      }
+
+      if (comparePriceEl) {
+        if (variant.compare_at_price && variant.compare_at_price > variant.price) {
+          comparePriceEl.textContent = formatVariantMoney(variant.compare_at_price);
+          comparePriceEl.classList.remove('hide');
+        } else {
+          comparePriceEl.classList.add('hide');
+        }
+      }
+
+      if (addToCartBtn && addToCartText) {
+        if (variant.available) {
+          addToCartBtn.disabled = false;
+          addToCartText.textContent = window.productStrings && window.productStrings.addToCart
+            ? window.productStrings.addToCart
+            : addToCartText.textContent;
+          if (shopifyPaymentButton) shopifyPaymentButton.style.display = '';
+        } else {
+          addToCartBtn.disabled = true;
+          addToCartText.textContent = window.productStrings && window.productStrings.soldOut
+            ? window.productStrings.soldOut
+            : addToCartText.textContent;
+          if (shopifyPaymentButton) shopifyPaymentButton.style.display = 'none';
+        }
+      }
+
+      dispatchVariantChange(variant);
+    }
+
+    if (variantPicker) {
+      variantPicker.addEventListener('click', function(event) {
+        var target = event.target;
+        var button = target && target.closest ? target.closest('.variant-picker__button') : null;
+        if (!button || button.disabled) return;
+        var variant = findVariantById(button.getAttribute('data-variant-id'));
+        if (variant) {
+          applySelectedVariant(variant);
+        }
+      });
+    }
+
     if (variantIdInput && typeof productSection.addEventListener === 'function') {
       productSection.addEventListener('variantChange', function(evt) {
         var variant = evt && evt.detail && evt.detail.variant ? evt.detail.variant : null;
         if (variant && variant.id) {
           variantIdInput.value = String(variant.id);
+        }
+      });
+    }
+
+    if (productSelect && typeof productSelect.addEventListener === 'function') {
+      productSelect.addEventListener('change', function() {
+        var variant = findVariantById(productSelect.value);
+        if (variant) {
+          applySelectedVariant(variant);
         }
       });
     }
@@ -1497,17 +1955,21 @@
       });
     }
 
-    productSection.addEventListener('change', function(event) {
-      var target = event.target;
-      if (!target || target.name !== ('imageSource-' + sectionId)) return;
-      if (target.value === 'upload') {
-        updateImageSourceUI('upload');
-        setImageSourceProperty('Uploaded image');
-      } else if (target.value === 'template') {
-        updateImageSourceUI('template');
-        setImageSourceProperty('Template image');
-        openTemplateModal();
+    productSection.addEventListener('click', function(event) {
+      var imageOption = event.target && event.target.closest ? event.target.closest('.image-source-option[data-image-source]') : null;
+      if (imageOption && productSection.contains(imageOption)) {
+        var source = imageOption.getAttribute('data-image-source');
+        if (source !== getCurrentImageSourceSelection()) {
+          handleImageSourceSelection(source);
+        }
+        return;
       }
+
+      var scalingOption = event.target && event.target.closest ? event.target.closest('.scaling-mode-option[data-scaling-mode]') : null;
+      if (!scalingOption || !productSection.contains(scalingOption)) return;
+      var mode = scalingOption.getAttribute('data-scaling-mode');
+      if (mode === getScalingModeSelection()) return;
+      handleScalingModeSelection(mode);
     });
 
     tryLoadFromHiddenInput();
@@ -1614,25 +2076,6 @@
     }
 
     // Delegate for dynamically updated DOM.
-    productSection.addEventListener('change', function(event) {
-      var target = event.target;
-      if (!target || target.name !== ('imageSource-' + sectionId)) return;
-    
-      if (target.value === 'upload') {
-        updateImageSourceUI('upload');
-        setImageSourceProperty('Uploaded image');
-    
-        // ✅ CLEAR TEMPLATE IMAGE
-        if (templateImagePropertyInput) {
-          templateImagePropertyInput.value = '';
-        }
-    
-      } else if (target.value === 'template') {
-        updateImageSourceUI('template');
-        setImageSourceProperty('Template image');
-        openTemplateModal();
-      }
-    });
     productSection.addEventListener('click', function(event) {
       handleSizeSelection(event.target);
       setTimeout(syncSizeFromCheckedRadio, 0);

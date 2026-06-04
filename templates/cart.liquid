@@ -152,14 +152,22 @@
     {%- comment -%} ✏️ Rename Canvas Scale → Scale {%- endcomment -%}
     {% if raw_key_clean == "canvas scale" or raw_key_clean == "canvas_scale" %}
       {% assign display_key = "Scale" %}
+    {% elsif raw_key_clean contains "choose your scale" %}
+      {% assign display_key = "Scaling" %}
     {% else %}
       {% assign display_key = formatted_key | strip %}
     {% endif %}
 
+    {%- comment -%} Hide redundant Scaling Method when customer picked a preset {%- endcomment -%}
+    {% assign prop_value = p.last | strip %}
+    {% if raw_key_clean == "scaling method" and prop_value == "Choose your scaling" %}
+      {% continue %}
+    {% endif %}
+
+    {% assign display_key = display_key | remove: '(required)' | remove: '(Required)' | strip %}
+
     <li class="cart-item__property">
       <span class="cart-item__property-label">{{ display_key }}:</span>
-
-      {% assign prop_value = p.last | strip %}
 
       {% if prop_value contains '/uploads/' or prop_value contains 'uploadery.s3' %}
         <a href="{{ prop_value }}" target="_blank" rel="noopener">View upload</a>
